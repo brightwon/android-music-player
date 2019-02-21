@@ -13,4 +13,12 @@ public class MusicListItem {
         this.songArtist = songArtist;
         this.playStatus = playStatus;
     }
+
+    public String getSongTitle(){
+        return songTitle;
+    }
+
+    public String getSongArtist(){
+        return songArtist;
+    }
 }

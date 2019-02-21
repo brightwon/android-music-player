@@ -15,33 +15,48 @@ import java.util.ArrayList;
 public class MusicListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     private ArrayList<MusicListItem> songItems;
+    private OnItemClickListener mListener;
 
-    public MusicListAdapter(ArrayList<MusicListItem> songItems) {
+    public MusicListAdapter(ArrayList<MusicListItem> songItems, OnItemClickListener listener) {
         this.songItems = songItems;
+        this.mListener = listener;
+    }
+
+    public interface OnItemClickListener {
+        void onItemClick(View v, int position);
     }
 
     @NonNull
     @Override
-    public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.music_list_item, parent, false);
+    public MusicListAdapter.SongHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View v = LayoutInflater.from(parent.getContext())
+                .inflate(R.layout.music_list_item, parent, false);
 
         return new SongHolder(v);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder viewHolder, int position) {
-        SongHolder songHolder = (SongHolder) viewHolder;
-        boolean playStatus = songItems.get(position).playStatus;
+    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder viewHolder, final int position) {
+        SongHolder holder = (SongHolder) viewHolder;
+        final boolean playStatus = songItems.get(position).playStatus;
 
-        songHolder.artImage.setImageResource(songItems.get(position).albumImg);
-        songHolder.songTitle.setText(songItems.get(position).songTitle);
-        songHolder.songArtist.setText(songItems.get(position).songArtist);
+        holder.artImage.setImageResource(songItems.get(position).albumImg);
+        holder.songTitle.setText(songItems.get(position).songTitle);
+        holder.songArtist.setText(songItems.get(position).songArtist);
 
         if(playStatus) {
-            songHolder.playStatus.setVisibility(View.VISIBLE);
+            holder.playGraph.setVisibility(View.VISIBLE);
         } else {
-            songHolder.playStatus.setVisibility(View.GONE);
+            holder.playGraph.setVisibility(View.GONE);
         }
+
+        holder.itemView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mListener.onItemClick(v, position);
+            }
+        });
+
     }
 
     @Override
@@ -50,17 +65,18 @@ public class MusicListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     }
 
 
-    public class SongHolder extends RecyclerView.ViewHolder {
+    public static class SongHolder extends RecyclerView.ViewHolder {
+
         ImageView artImage;
         TextView songTitle, songArtist;
-        AVLoadingIndicatorView playStatus;
+        AVLoadingIndicatorView playGraph;
 
-        private SongHolder(@NonNull View itemView) {
-            super(itemView);
-            artImage = itemView.findViewById(R.id.song_img);
-            songTitle = itemView.findViewById(R.id.song_title);
-            songArtist = itemView.findViewById(R.id.song_artist);
-            playStatus = itemView.findViewById(R.id.play_status);
+        public SongHolder(View v) {
+            super(v);
+            artImage = v.findViewById(R.id.song_img);
+            songTitle = v.findViewById(R.id.song_title);
+            songArtist = v.findViewById(R.id.song_artist);
+            playGraph = v.findViewById(R.id.play_status);
         }
     }
 
