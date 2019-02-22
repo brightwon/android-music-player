@@ -2,6 +2,7 @@ package com.brightwon.music_player;
 
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,6 +17,10 @@ public class MusicListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
 
     private ArrayList<MusicListItem> songItems;
     private OnItemClickListener mListener;
+    private RecyclerView mRecyclerView;
+    private int prev = -1;
+    private SongHolder preHolder;
+    private boolean stop;
 
     public MusicListAdapter(ArrayList<MusicListItem> songItems, OnItemClickListener listener) {
         this.songItems = songItems;
@@ -31,32 +36,73 @@ public class MusicListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     public MusicListAdapter.SongHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View v = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.music_list_item, parent, false);
-
+        mRecyclerView = (RecyclerView) parent;
         return new SongHolder(v);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder viewHolder, final int position) {
-        SongHolder holder = (SongHolder) viewHolder;
-        final boolean playStatus = songItems.get(position).playStatus;
+    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder viewHolder, int position) {
+        final MusicListItem currItem = songItems.get(position);
+        final SongHolder holder = (SongHolder) viewHolder;
+        final int curr = position;
 
         holder.artImage.setImageResource(songItems.get(position).albumImg);
         holder.songTitle.setText(songItems.get(position).songTitle);
         holder.songArtist.setText(songItems.get(position).songArtist);
 
-        if(playStatus) {
+        if(currItem.playStatus) {
             holder.playGraph.setVisibility(View.VISIBLE);
+            if(stop) {
+                holder.playGraph.getIndicator().stop();
+            }
         } else {
             holder.playGraph.setVisibility(View.GONE);
         }
 
+        // click event
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mListener.onItemClick(v, position);
+                // click listener for MainActivity
+                mListener.onItemClick(v, curr);
+
+                // play view animation event logic
+                if (!currItem.playStatus && prev == -1) {
+                    // first click
+                    holder.playGraph.setVisibility(View.VISIBLE);
+                    currItem.playStatus = true;
+                    preHolder = (SongHolder) mRecyclerView.findViewHolderForAdapterPosition(curr);
+
+                } else if (currItem.playStatus && prev == curr){
+                    // same item click
+                    if (holder.playGraph.getIndicator().isRunning()) {
+                        // if it is playing.. stop !
+                        holder.playGraph.getIndicator().stop();
+                        stop = true;
+
+                    } else {
+                        // if it was paused.. replay !
+                        holder.playGraph.getIndicator().start();
+                        stop = false;
+
+                    }
+                    currItem.playStatus = true;
+                    preHolder = (SongHolder) mRecyclerView.findViewHolderForAdapterPosition(curr);
+
+                } else {
+                    // other item click
+                    preHolder.playGraph.setVisibility(View.GONE);
+                    songItems.get(prev).playStatus = false;
+
+                    holder.playGraph.setVisibility(View.VISIBLE);
+                    currItem.playStatus = true;
+
+                    preHolder = (SongHolder) mRecyclerView.findViewHolderForAdapterPosition(curr);
+                }
+
+                prev = curr;
             }
         });
-
     }
 
     @Override
