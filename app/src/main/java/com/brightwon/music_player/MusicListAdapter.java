@@ -1,5 +1,6 @@
 package com.brightwon.music_player;
 
+import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -9,6 +10,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
 import com.wang.avi.AVLoadingIndicatorView;
 
 import java.util.ArrayList;
@@ -18,9 +20,10 @@ public class MusicListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     private ArrayList<MusicListItem> songItems;
     private OnItemClickListener mListener;
     private RecyclerView mRecyclerView;
-    private int prev = -1;
     private SongHolder preHolder;
+    private int prev = -1;
     private boolean stop;
+    private Context context;
 
     public MusicListAdapter(ArrayList<MusicListItem> songItems, OnItemClickListener listener) {
         this.songItems = songItems;
@@ -37,6 +40,7 @@ public class MusicListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         View v = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.music_list_item, parent, false);
         mRecyclerView = (RecyclerView) parent;
+        context = parent.getContext();
         return new SongHolder(v);
     }
 
@@ -46,7 +50,7 @@ public class MusicListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         final SongHolder holder = (SongHolder) viewHolder;
         final int curr = position;
 
-        holder.artImage.setImageResource(songItems.get(position).albumImg);
+        Glide.with(context).load(songItems.get(position).albumImg).into(holder.artImage);
         holder.songTitle.setText(songItems.get(position).songTitle);
         holder.songArtist.setText(songItems.get(position).songArtist);
 
