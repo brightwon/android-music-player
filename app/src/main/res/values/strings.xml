@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">music_player</string>
+    <string name="appbar_title">Playlist</string>
+    <string name="song_title">Song Title</string>
+    <string name="song_artist">Artist</string>
+    <string name="album_art_desc">Album Art</string>
+
 </resources>

@@ -1,7 +1,9 @@
 package com.brightwon.music_player;
 
 import android.Manifest;
+import android.annotation.TargetApi;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -21,6 +23,7 @@ import com.brightwon.music_player.Model.MusicDataGetter;
 
 import java.util.ArrayList;
 
+@TargetApi(Build.VERSION_CODES.JELLY_BEAN)
 public class MainActivity extends AppCompatActivity {
 
     static final int MY_PERMISSIONS_REQUEST_READ_EXT_STORAGE = 5555;
@@ -28,15 +31,10 @@ public class MainActivity extends AppCompatActivity {
 
     private RecyclerView recyclerView;
     private MusicListAdapter adapter;
-    private RecyclerView.LayoutManager layoutManager;
 
     private ArrayList<MusicListItem> songs;
-    private MusicListAdapter.OnItemClickListener mListener;
 
     private MusicDataGetter model = new MusicDataGetter();
-
-    private Toolbar toolBar;
-    private ActionBar actionBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,7 +43,7 @@ public class MainActivity extends AppCompatActivity {
         initAppBar();
         initRecycler();
 
-        mListener = new MusicListAdapter.OnItemClickListener() {
+        MusicListAdapter.OnItemClickListener mListener = new MusicListAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(View v, int position) {
 
@@ -66,9 +64,12 @@ public class MainActivity extends AppCompatActivity {
 
     // define app bar
     public void initAppBar() {
-        toolBar = findViewById(R.id.toolbar);
+        Toolbar toolBar = findViewById(R.id.toolbar);
         setSupportActionBar(toolBar);
-        actionBar = getSupportActionBar();
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.setDisplayShowTitleEnabled(false);
+        }
     }
 
     // define recyclerView
@@ -79,7 +80,7 @@ public class MainActivity extends AppCompatActivity {
         recyclerView.setHasFixedSize(true);
 
         // define LayoutManager
-        layoutManager = new LinearLayoutManager(this);
+        RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(layoutManager);
     }
 

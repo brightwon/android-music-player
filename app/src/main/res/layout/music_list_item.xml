@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:background="@drawable/line_bottom"
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
@@ -16,7 +15,8 @@
         android:layout_marginBottom="18dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        android:contentDescription="@string/album_art_desc" />
 
     <LinearLayout
         android:id="@+id/song_container"
@@ -49,8 +49,8 @@
                 android:id="@+id/song_title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="songtitle"
-                android:textColor="#000000"
+                android:text="@string/song_title"
+                android:textColor="@color/BlackText"
                 android:textSize="17sp" />
         </LinearLayout>
 
@@ -60,7 +60,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:text="songartist" />
+            android:text="@string/song_artist" />
     </LinearLayout>
 
 </android.support.constraint.ConstraintLayout>
