@@ -25,7 +25,7 @@ public class MusicListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     private boolean stop;
     private Context context;
 
-    public MusicListAdapter(ArrayList<MusicListItem> songItems, OnItemClickListener listener) {
+    MusicListAdapter(ArrayList<MusicListItem> songItems, OnItemClickListener listener) {
         this.songItems = songItems;
         this.mListener = listener;
     }
@@ -121,7 +121,7 @@ public class MusicListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         TextView songTitle, songArtist;
         AVLoadingIndicatorView playGraph;
 
-        public SongHolder(View v) {
+        SongHolder(View v) {
             super(v);
             artImage = v.findViewById(R.id.song_img);
             songTitle = v.findViewById(R.id.song_title);
