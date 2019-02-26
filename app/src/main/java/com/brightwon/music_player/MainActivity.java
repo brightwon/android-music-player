@@ -3,13 +3,14 @@ package com.brightwon.music_player;
 import android.Manifest;
 import android.annotation.TargetApi;
 import android.app.ActivityManager;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
+import android.os.IBinder;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -43,6 +44,11 @@ public class MainActivity extends AppCompatActivity {
 
     String storagePermission = Manifest.permission.READ_EXTERNAL_STORAGE;
 
+    private String TAG = "MainActivity";
+
+    private MusicPlayService mService;
+    private boolean mBound = false;
+
     private RecyclerView recyclerView;
     private MusicListAdapter adapter;
     private ArrayList<MusicListItem> songs;
@@ -61,7 +67,12 @@ public class MainActivity extends AppCompatActivity {
             public void onItemClick(View v, int position) {
                 // music play and float floating view
                 if (isServiceRunning(MusicPlayService.class)) {
-
+                    // change floatingView image
+                    if (mService.isFloat) {
+                        mService.setFloatingViewImg(songs.get(position).albumImg);
+                    } else {
+                        mService.setNewFloatingView(songs.get(position).albumImg);
+                    }
                 } else {
                     startFloatingView(position);
                 }
@@ -71,16 +82,6 @@ public class MainActivity extends AppCompatActivity {
         // set adapter
         adapter = new MusicListAdapter(songs, mListener);
         recyclerView.setAdapter(adapter);
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            final String channelId = getString(R.string.app_name);
-            final String channelName = getString(R.string.appbar_title);
-            final NotificationChannel defaultChannel = new NotificationChannel(channelId, channelName, NotificationManager.IMPORTANCE_MIN);
-            final NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-            if (manager != null) {
-                manager.createNotificationChannel(defaultChannel);
-            }
-        }
     }
 
     /**
@@ -99,8 +100,12 @@ public class MainActivity extends AppCompatActivity {
 
             Intent intent = new Intent(getApplicationContext(), MusicPlayService.class);
             intent.setData(artUri);
+            intent.putExtra("title", songs.get(position).songTitle);
+            intent.putExtra("artist", songs.get(position).songArtist);
             intent.putExtra(EXTRA_CUTOUT_SAFE_AREA, FloatingViewManager.findCutoutSafeArea(this));
+
             ContextCompat.startForegroundService(this, intent);
+            bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
         } else {
             // have not SYSTEM_ALERT_WINDOW permission
             requestSystemAlertWindowPermission();
@@ -129,6 +134,23 @@ public class MainActivity extends AppCompatActivity {
         }
         super.onActivityResult(requestCode, resultCode, data);
     }
+
+    /**
+     *  defines callback for service binding.
+     */
+    private ServiceConnection mConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            MusicPlayService.LocalBinder binder = (MusicPlayService.LocalBinder) service;
+            mService = binder.getService();
+            mBound = true;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            mBound = false;
+        }
+    };
 
 
     /**
@@ -243,4 +265,12 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if(mBound) {
+            unbindService(mConnection);
+            mBound = false;
+        }
+    }
 }
