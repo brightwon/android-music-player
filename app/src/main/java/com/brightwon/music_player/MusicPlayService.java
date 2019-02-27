@@ -1,6 +1,5 @@
 package com.brightwon.music_player;
 
-import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Notification;
 import android.app.Service;
@@ -17,7 +16,6 @@ import android.os.IBinder;
 import android.os.Parcelable;
 import android.support.v4.app.NotificationCompat;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager;
@@ -28,12 +26,9 @@ import de.hdodenhof.circleimageview.CircleImageView;
 import jp.co.recruit_lifestyle.android.floatingview.FloatingViewListener;
 import jp.co.recruit_lifestyle.android.floatingview.FloatingViewManager;
 
-@SuppressLint("Registered")
 public class MusicPlayService extends Service implements FloatingViewListener {
 
     private final IBinder binder = new LocalBinder();
-
-    private String TAG = "MusicPlayService";
 
     static final int NOTIFICATION_ID = 7777;
     static final String EXTRA_CUTOUT_SAFE_AREA = "cutout_safe_area";
@@ -53,13 +48,13 @@ public class MusicPlayService extends Service implements FloatingViewListener {
 
     @Override
     public int onStartCommand(final Intent intent, int flags, int startId) {
-        // generate floating View
+        // defines the floatingView
         parcelable = intent.getParcelableExtra(EXTRA_CUTOUT_SAFE_AREA);
         initFloatingView();
         setFloatingViewImg(intent.getData());
         drawFloatingView();
 
-        // service start
+        // starts the notification
         startForeground(NOTIFICATION_ID, createNotification(this,
                 intent.getStringExtra("title"), intent.getStringExtra("artist")));
 
@@ -69,7 +64,6 @@ public class MusicPlayService extends Service implements FloatingViewListener {
                 // go to music detail activity
             }
         });
-        Log.e(TAG, "onStartCommand: 서비스 시작" );
         return super.onStartCommand(intent, flags, startId);
     }
 
@@ -78,10 +72,11 @@ public class MusicPlayService extends Service implements FloatingViewListener {
         return binder;
     }
 
+    /** releases the objects when the floatingView is removed  */
     @Override
     public void onFinishFloatingView() {
         if (manager != null) {
-            releaseAllView();
+            releaseAllSetting();
         }
     }
 
@@ -90,9 +85,7 @@ public class MusicPlayService extends Service implements FloatingViewListener {
 
     }
 
-    /*
-        create notification
-     */
+    /** sets the notification builder */
     private static Notification createNotification(Context context, String title, String artist) {
         final NotificationCompat.Builder builder = new NotificationCompat.Builder(context,
                 context.getString(R.string.app_name));
@@ -106,36 +99,23 @@ public class MusicPlayService extends Service implements FloatingViewListener {
         return builder.build();
     }
 
-    /*
-        when service is terminated, floatingView also disappears
-     */
-    @Override
-    public void onDestroy() {
-        if (manager != null) {
-            releaseAllView();
-        }
-        super.onDestroy();
-    }
-
+    /** initializes the new floatingView */
     public void setNewFloatingView(Uri uri) {
         initFloatingView();
         setFloatingViewImg(uri);
         drawFloatingView();
     }
 
-    /*
-        set FloatingView image (album art)
-     */
+    /** sets the floatingView image */
     public void setFloatingViewImg(Uri uri) {
         Glide.with(this).load(uri).override(200,200).into(iconView);
     }
 
-    /**
-     *  set floatingView options
-     */
+    /** sets the floatingView settings */
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     public void initFloatingView() {
 
+        // initializes the floatingView
         iconView = (CircleImageView) LayoutInflater.from(this).
                 inflate(R.layout.floating_play_widget, null, false);
 
@@ -143,7 +123,7 @@ public class MusicPlayService extends Service implements FloatingViewListener {
         WindowManager windowManager = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
         windowManager.getDefaultDisplay().getMetrics(metrics);
 
-        // floatingView manager setting
+        // sets the trash icon size and alpha
         manager = new FloatingViewManager(this, this);
         Bitmap bitmap = ((BitmapDrawable) getDrawable(R.drawable.stop)).getBitmap();
         Drawable mDrawable = new BitmapDrawable(getResources(), Bitmap.createScaledBitmap(bitmap,
@@ -152,27 +132,33 @@ public class MusicPlayService extends Service implements FloatingViewListener {
         manager.setFixedTrashIconImage(mDrawable);
         manager.setSafeInsetRect((Rect) parcelable);
 
-        // floatingView location
+        // sets the floatingView location
         // horizontal : right side, vertical : 5% from bottom
         options = new FloatingViewManager.Options();
         options.floatingViewX = metrics.widthPixels;
         options.floatingViewY = (int) (metrics.heightPixels * 0.05);
     }
 
+    /** draws the floatingView */
     public void drawFloatingView() {
-        // add view
         manager.addViewToWindow(iconView, options);
         isFloat = true;
     }
 
-    /*
-        This is called when a user removes the floatingView.
-     */
-    public void releaseAllView() {
+    /** removes all settings */
+    public void releaseAllSetting() {
         manager.removeAllViewToWindow();
         manager = null;
         iconView = null;
         options = null;
         isFloat = false;
+    }
+
+    @Override
+    public void onDestroy() {
+        if (manager != null) {
+            releaseAllSetting();
+        }
+        super.onDestroy();
     }
 }

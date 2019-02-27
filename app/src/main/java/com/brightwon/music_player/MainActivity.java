@@ -22,13 +22,12 @@ import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
-import com.brightwon.music_player.Model.MusicDataGetter;
+import com.brightwon.music_player.Model.MusicDataHelper;
 
 import java.util.ArrayList;
 
@@ -44,8 +43,6 @@ public class MainActivity extends AppCompatActivity {
 
     String storagePermission = Manifest.permission.READ_EXTERNAL_STORAGE;
 
-    private String TAG = "MainActivity";
-
     private MusicPlayService mService;
     private boolean mBound = false;
 
@@ -53,7 +50,7 @@ public class MainActivity extends AppCompatActivity {
     private MusicListAdapter adapter;
     private ArrayList<MusicListItem> songs;
 
-    private MusicDataGetter model = new MusicDataGetter();
+    private MusicDataHelper model = new MusicDataHelper(this);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,9 +62,9 @@ public class MainActivity extends AppCompatActivity {
         MusicListAdapter.OnItemClickListener mListener = new MusicListAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(View v, int position) {
-                // music play and float floating view
+                // check if music is playing
                 if (isServiceRunning(MusicPlayService.class)) {
-                    // change floatingView image
+                    // change the floatingView image
                     if (mService.isFloat) {
                         mService.setFloatingViewImg(songs.get(position).albumImg);
                     } else {
@@ -84,18 +81,11 @@ public class MainActivity extends AppCompatActivity {
         recyclerView.setAdapter(adapter);
     }
 
-    /**
-     *  these methods are related to start floating view (and music play in service Class)
-     *  1. startFloatingView
-     *  2. requestSystemAlertWindowPermission
-     *  3. onActivityResult
-     */
-    // start Floating View and music play(in MusicPlayService.class)
-    // only when have SYSTEM_ALERT_WINDOW permission
+    /** starts the floatingView and play the music in Service */
     @TargetApi(Build.VERSION_CODES.O)
     public void startFloatingView(int position) {
+        // check the permission
         if (Settings.canDrawOverlays(this)) {
-            // have SYSTEM_ALERT_WINDOW permission
             Uri artUri = songs.get(position).albumImg;
 
             Intent intent = new Intent(getApplicationContext(), MusicPlayService.class);
@@ -104,18 +94,17 @@ public class MainActivity extends AppCompatActivity {
             intent.putExtra("artist", songs.get(position).songArtist);
             intent.putExtra(EXTRA_CUTOUT_SAFE_AREA, FloatingViewManager.findCutoutSafeArea(this));
 
+            // starts and binds the Service
             ContextCompat.startForegroundService(this, intent);
             bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
         } else {
-            // have not SYSTEM_ALERT_WINDOW permission
             requestSystemAlertWindowPermission();
         }
     }
 
-    // get SYSTEM_ALERT_WINDOW permission
+    /** gets the SYSTEM_ALERT_WINDOW permission */
     @TargetApi(Build.VERSION_CODES.M)
     private void requestSystemAlertWindowPermission() {
-        // request the SYSTEM_ALERT_WINDOW permission
         Toast.makeText(this, "권한을 추가해 주세요", Toast.LENGTH_SHORT).show();
         startActivityForResult(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION), MY_PERMISSIONS_REQUEST_SYSTEM_ALERT_WINDOW);
     }
@@ -125,6 +114,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         switch (requestCode) {
             case MY_PERMISSIONS_REQUEST_SYSTEM_ALERT_WINDOW :
+                // check the permission
                 if (Settings.canDrawOverlays(this)) {
                     Toast.makeText(this, "이제 음악을 재생할 수 있어요!", Toast.LENGTH_SHORT).show();
                 } else {
@@ -135,9 +125,7 @@ public class MainActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
     }
 
-    /**
-     *  defines callback for service binding.
-     */
+    /** defines callback for the Service binding */
     private ServiceConnection mConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
@@ -153,47 +141,39 @@ public class MainActivity extends AppCompatActivity {
     };
 
 
-    /**
-     *  these methods are related to get music list from local storage in device.
-     *  1. getMusicList
-     *  2. requestReadExternalStoragePermission
-     *  3. onRequestPermissionsResult
-     */
-    // get music list only when have READ_EXTERNAL_STORAGE permission
+    /** gets the music list from local storage in device. */
     public void getMusicList() {
         int permissionCheck = ContextCompat.checkSelfPermission(this, storagePermission);
+        // permission check
         if (permissionCheck == PackageManager.PERMISSION_GRANTED) {
-            // have READ_EXTERNAL_STORAGE permission
-            ArrayList<MusicListItem> list = model.getMusicData(this, model.getAudioPath());
+            ArrayList<MusicListItem> list = model.getMusicData(model.getAudioPath());
             songs.addAll(list);
             adapter.notifyDataSetChanged();
         } else {
-            // not have READ_EXTERNAL_STORAGE permission
             requestReadExternalStoragePermission();
         }
     }
 
-    // get READ_EXTERNAL_STORAGE permission
+    /** requests the READ_EXTERNAL_STORAGE permission */
     private void requestReadExternalStoragePermission() {
+        // check the permission
         if (ActivityCompat.shouldShowRequestPermissionRationale(this,
                 storagePermission)) {
-            // READ_EXTERNAL_STORAGE permission denied before
+            // if permission denied before
             Toast.makeText(this, "미디어 접근 권한을 수락해 주세요", Toast.LENGTH_SHORT).show();
         } else {
-            // request READ_EXTERNAL_STORAGE permission
             ActivityCompat.requestPermissions(this, new String[]{storagePermission},
                     MY_PERMISSIONS_REQUEST_READ_EXT_STORAGE);
         }
     }
 
-    // set action after request permission
+    /** sets the response after permission request */
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         switch (requestCode) {
             case MY_PERMISSIONS_REQUEST_READ_EXT_STORAGE : {
-                // If request is cancelled, the result arrays are empty
+                // check the permission
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    // have READ_EXTERNAL_STORAGE permission
                     Toast.makeText(this, "권한을 가져왔어요! 다시 추가해 보세요", Toast.LENGTH_SHORT).show();
                 } else {
                     Toast.makeText(this, "음원을 가져올 수 없어요!", Toast.LENGTH_SHORT).show();
@@ -204,9 +184,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    /**
-     *  check if a service is running
-     */
+    /** check if Service is running */
     private boolean isServiceRunning(Class<?> serviceClass) {
         ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
         for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
@@ -218,10 +196,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    /**
-     *  initialize AppBar and RecyclerView
-     */
-    // define app bar
+    /** initializes the appBar */
     public void initAppBar() {
         Toolbar toolBar = findViewById(R.id.toolbar);
         setSupportActionBar(toolBar);
@@ -231,30 +206,27 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // define recyclerView
+    /** initializes the recyclerView */
     public void initRecycler() {
         songs = new ArrayList<>();
 
         recyclerView = findViewById(R.id.music_list);
         recyclerView.setHasFixedSize(true);
 
-        // define LayoutManager
+        // initializes the LayoutManager
         RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(layoutManager);
     }
 
 
-    /**
-     *  create tool bar menu and menu item click event
-     */
-    // app bar menu create
+    /** creates the toolBar menu item */
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.app_bar_menu, menu);
         return true;
     }
 
-    // app bar menu click event
+    /** creates the toolBar menu click event */
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.add_btn) {
@@ -265,10 +237,11 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /** unbinds Service */
     @Override
     protected void onStop() {
         super.onStop();
-        if(mBound) {
+        if (mBound) {
             unbindService(mConnection);
             mBound = false;
         }
