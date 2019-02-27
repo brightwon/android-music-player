@@ -72,6 +72,12 @@ public class MusicPlayService extends Service implements FloatingViewListener {
         return binder;
     }
 
+    @Override
+    public boolean onUnbind(Intent intent) {
+        stopSelf();
+        return super.onUnbind(intent);
+    }
+
     /** releases the objects when the floatingView is removed  */
     @Override
     public void onFinishFloatingView() {

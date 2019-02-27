@@ -12,8 +12,6 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.IBinder;
 import android.provider.Settings;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
@@ -79,6 +77,11 @@ public class MainActivity extends AppCompatActivity {
         // set adapter
         adapter = new MusicListAdapter(songs, mListener);
         recyclerView.setAdapter(adapter);
+
+        // get music list from DB
+        ArrayList<MusicListItem> list = model.selectData();
+        songs.addAll(list);
+        adapter.notifyDataSetChanged();
     }
 
     /** starts the floatingView and play the music in Service */
@@ -111,7 +114,7 @@ public class MainActivity extends AppCompatActivity {
 
     @TargetApi(Build.VERSION_CODES.M)
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         switch (requestCode) {
             case MY_PERMISSIONS_REQUEST_SYSTEM_ALERT_WINDOW :
                 // check the permission
@@ -169,7 +172,7 @@ public class MainActivity extends AppCompatActivity {
 
     /** sets the response after permission request */
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         switch (requestCode) {
             case MY_PERMISSIONS_REQUEST_READ_EXT_STORAGE : {
                 // check the permission

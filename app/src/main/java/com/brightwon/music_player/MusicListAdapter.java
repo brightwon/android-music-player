@@ -3,7 +3,6 @@ package com.brightwon.music_player;
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -63,14 +62,14 @@ public class MusicListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
             holder.playGraph.setVisibility(View.GONE);
         }
 
-        // click event
+        // item click event
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 // click listener for MainActivity
                 mListener.onItemClick(v, curr);
 
-                // play view animation event logic
+                // play animation logic
                 if (!currItem.playStatus && prev == -1) {
                     // first click
                     holder.playGraph.setVisibility(View.VISIBLE);
@@ -83,12 +82,10 @@ public class MusicListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
                         // if it is playing.. stop !
                         holder.playGraph.getIndicator().stop();
                         stop = true;
-
                     } else {
                         // if it was paused.. replay !
                         holder.playGraph.getIndicator().start();
                         stop = false;
-
                     }
                     currItem.playStatus = true;
                     preHolder = (SongHolder) mRecyclerView.findViewHolderForAdapterPosition(curr);
