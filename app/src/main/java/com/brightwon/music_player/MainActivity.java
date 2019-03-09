@@ -248,8 +248,8 @@ public class MainActivity extends AppCompatActivity {
 
     /** unbinds Service */
     @Override
-    protected void onStop() {
-        super.onStop();
+    protected void onDestroy() {
+        super.onDestroy();
         if (mBound) {
             unbindService(mConnection);
             mBound = false;
