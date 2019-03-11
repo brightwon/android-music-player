@@ -69,8 +69,9 @@ public class MainActivity extends AppCompatActivity {
                     } else {
                         mService.setNewFloatingView(songs.get(position).albumImg);
                     }
+                    mService.playMusic(getApplicationContext(), songs.get(position).id, position);
                 } else {
-                    startFloatingView(position);
+                    startMusicService(position);
                 }
             }
         };
@@ -87,7 +88,7 @@ public class MainActivity extends AppCompatActivity {
 
     /** starts the floatingView and play the music in Service */
     @TargetApi(Build.VERSION_CODES.O)
-    public void startFloatingView(int position) {
+    public void startMusicService(int position) {
         // check the permission
         if (Settings.canDrawOverlays(this)) {
             Uri artUri = songs.get(position).albumImg;
@@ -96,6 +97,8 @@ public class MainActivity extends AppCompatActivity {
             intent.setData(artUri);
             intent.putExtra("title", songs.get(position).songTitle);
             intent.putExtra("artist", songs.get(position).songArtist);
+            intent.putExtra("id", songs.get(position).id);
+            intent.putExtra("position", position);
             intent.putExtra(EXTRA_CUTOUT_SAFE_AREA, FloatingViewManager.findCutoutSafeArea(this));
 
             // starts and binds the Service

@@ -3,6 +3,7 @@ package com.brightwon.music_player;
 import android.annotation.TargetApi;
 import android.app.Notification;
 import android.app.Service;
+import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -14,6 +15,7 @@ import android.os.Binder;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.Parcelable;
+import android.provider.MediaStore;
 import android.support.v4.app.NotificationCompat;
 import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
@@ -21,6 +23,8 @@ import android.view.View;
 import android.view.WindowManager;
 
 import com.bumptech.glide.Glide;
+
+import java.io.IOException;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 import jp.co.recruit_lifestyle.android.floatingview.FloatingViewListener;
@@ -40,6 +44,8 @@ public class MusicPlayService extends Service implements FloatingViewListener {
     private CircleImageView iconView;
     public boolean isFloat = false;
 
+    public MusicPlayer mp;
+
     public class LocalBinder extends Binder {
         MusicPlayService getService() {
             return MusicPlayService.this;
@@ -48,6 +54,13 @@ public class MusicPlayService extends Service implements FloatingViewListener {
 
     @Override
     public int onStartCommand(final Intent intent, int flags, int startId) {
+        int musicID = intent.getIntExtra("id", 0);
+        int position = intent.getIntExtra("position", 0);
+        mp = new MusicPlayer();
+
+        // create MusicPlayer object and start
+        playMusic(getApplicationContext(), musicID, position);
+
         // defines the floatingView
         parcelable = intent.getParcelableExtra(EXTRA_CUTOUT_SAFE_AREA);
         initFloatingView();
@@ -67,14 +80,25 @@ public class MusicPlayService extends Service implements FloatingViewListener {
         return super.onStartCommand(intent, flags, startId);
     }
 
+    /** plays the music in MusicPlayer class */
+    public void playMusic(Context context, int id, int position) {
+        try {
+            mp.playMusic(context, id, position);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     @Override
     public IBinder onBind(Intent intent) {
         return binder;
     }
 
+    /** finish the MusicPlayService */
     @Override
     public boolean onUnbind(Intent intent) {
         stopSelf();
+        mp.release();
         return super.onUnbind(intent);
     }
 
@@ -83,6 +107,7 @@ public class MusicPlayService extends Service implements FloatingViewListener {
     public void onFinishFloatingView() {
         if (manager != null) {
             releaseAllSetting();
+            mp.reset();
         }
     }
 

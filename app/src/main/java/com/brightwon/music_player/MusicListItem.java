@@ -7,9 +7,11 @@ public class MusicListItem {
     Uri albumImg;
     String songTitle;
     String songArtist;
+    int id;
     boolean playStatus;
 
-    public MusicListItem(Uri albumImg, String songTitle, String songArtist, boolean playStatus){
+    public MusicListItem(int id, Uri albumImg, String songTitle, String songArtist, boolean playStatus){
+        this.id = id;
         this.albumImg = albumImg;
         this.songTitle = songTitle;
         this.songArtist = songArtist;

@@ -59,7 +59,7 @@ public class MusicDataHelper {
                     // save list in SQLite
                     insertData(id, String.valueOf(uri), title, artist);
 
-                    metaList.add(new MusicListItem(uri, title, artist, false));
+                    metaList.add(new MusicListItem(id, uri, title, artist, false));
                 }
             }
             cursor.close();
@@ -91,6 +91,7 @@ public class MusicDataHelper {
         SQLiteDatabase db = dbHelper.getReadableDatabase();
 
         String[] projection = {
+                DbHelper.FeedEntry.COLUMN_ID,
                 DbHelper.FeedEntry.COLUMN_ALBUM_ID,
                 DbHelper.FeedEntry.COLUMN_SONG_TITLE,
                 DbHelper.FeedEntry.COLUMN_ARTIST
@@ -108,11 +109,12 @@ public class MusicDataHelper {
 
         ArrayList<MusicListItem> songs = new ArrayList<>();
         while(cursor.moveToNext()) {
-            Uri uri = Uri.parse(cursor.getString(0));
-            String title = cursor.getString(1);
-            String artist = cursor.getString(2);
+            int id = cursor.getInt(0);
+            Uri uri = Uri.parse(cursor.getString(1));
+            String title = cursor.getString(2);
+            String artist = cursor.getString(3);
 
-            songs.add(new MusicListItem(uri, title, artist, false));
+            songs.add(new MusicListItem(id, uri, title, artist, false));
         }
         cursor.close();
 
