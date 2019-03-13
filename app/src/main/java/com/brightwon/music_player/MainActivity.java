@@ -94,7 +94,7 @@ public class MainActivity extends AppCompatActivity {
             Uri artUri = songs.get(position).albumImg;
 
             Intent intent = new Intent(getApplicationContext(), MusicPlayService.class);
-            intent.setData(artUri);
+            intent.putExtra("artUri", artUri);
             intent.putExtra("title", songs.get(position).songTitle);
             intent.putExtra("artist", songs.get(position).songArtist);
             intent.putExtra("id", songs.get(position).id);

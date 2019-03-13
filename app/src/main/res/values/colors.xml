@@ -3,9 +3,11 @@
     <color name="colorPrimary">#008577</color>
     <color name="colorPrimaryDark">#00574B</color>
     <color name="colorAccent">#D81B60</color>
-    <color name="BlackText">#000000</color>
-    <color name="White">#FFFFFF</color>
-    <color name="StrokeGray">#DCDCDC</color>
-    <color name="Selected">#C4453E</color>
+    <color name="blackText">#000000</color>
+    <color name="white">#FFFFFF</color>
+    <color name="strokeGray">#DCDCDC</color>
+    <color name="gray">#B2B2B2</color>
+    <color name="selected">#C4453E</color>
     <color name="orangeColor">#F6BB43</color>
+    <color name="progress_background">#E9E9E9</color>
 </resources>

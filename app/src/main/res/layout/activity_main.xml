@@ -30,7 +30,7 @@
         <TextView
             android:text="@string/appbar_title"
             android:textSize="20sp"
-            android:textColor="@color/BlackText"
+            android:textColor="@color/blackText"
             android:layout_gravity="center"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />

@@ -10,7 +10,7 @@
 
     <!-- MainActivity ToolBar Theme. -->
     <style name="MyToolBar" parent="Theme.AppCompat.Light.NoActionBar">
-        <item name="android:background">@color/White</item>
+        <item name="android:background">@color/white</item>
     </style>
 
 </resources>

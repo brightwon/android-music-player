@@ -44,7 +44,10 @@ public class MusicPlayService extends Service implements FloatingViewListener {
     private CircleImageView iconView;
     public boolean isFloat = false;
 
-    public MusicPlayer mp;
+    public static MusicPlayer mp;
+    private Uri artUri;
+    private String title;
+    private String artist;
 
     public class LocalBinder extends Binder {
         MusicPlayService getService() {
@@ -54,30 +57,44 @@ public class MusicPlayService extends Service implements FloatingViewListener {
 
     @Override
     public int onStartCommand(final Intent intent, int flags, int startId) {
-        int musicID = intent.getIntExtra("id", 0);
         int position = intent.getIntExtra("position", 0);
-        mp = new MusicPlayer();
+        final int musicID = intent.getIntExtra("id", 0);
+        final String title = intent.getStringExtra("title");
+        final String artist = intent.getStringExtra("artist");
+        final Uri albumArt = intent.getParcelableExtra("artUri");
 
         // create MusicPlayer object and start
+        mp = new MusicPlayer();
         playMusic(getApplicationContext(), musicID, position);
 
         // defines the floatingView
         parcelable = intent.getParcelableExtra(EXTRA_CUTOUT_SAFE_AREA);
         initFloatingView();
-        setFloatingViewImg(intent.getData());
+        setFloatingViewImg(albumArt);
         drawFloatingView();
 
         // starts the notification
-        startForeground(NOTIFICATION_ID, createNotification(this,
-                intent.getStringExtra("title"), intent.getStringExtra("artist")));
+        startForeground(NOTIFICATION_ID, createNotification(this, title, artist));
 
         iconView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 // go to music detail activity
+                Intent intent = new Intent(getApplicationContext(), PlayerActivity.class);
+                sendIntent(intent, musicID, title, artist, albumArt);
             }
         });
         return super.onStartCommand(intent, flags, startId);
+    }
+
+    /** starts the PlayerActivity */
+    public void sendIntent(Intent intent, int id, String title, String artist, Uri albumArt) {
+        intent.putExtra("title", title);
+        intent.putExtra("artist", artist);
+        intent.putExtra("id", id);
+        intent.putExtra("artUri", albumArt);
+
+        startActivity(intent);
     }
 
     /** plays the music in MusicPlayer class */
