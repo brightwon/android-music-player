@@ -1,7 +1,6 @@
 package com.brightwon.music_player;
 
 import android.annotation.TargetApi;
-import android.app.Notification;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -14,7 +13,6 @@ import android.os.Binder;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.Parcelable;
-import android.support.v4.app.NotificationCompat;
 import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -32,7 +30,6 @@ public class MusicPlayService extends Service implements FloatingViewListener {
 
     private final IBinder binder = new LocalBinder();
 
-    static final int NOTIFICATION_ID = 7777;
     static final String EXTRA_CUTOUT_SAFE_AREA = "cutout_safe_area";
 
     private FloatingViewManager manager;
@@ -55,36 +52,13 @@ public class MusicPlayService extends Service implements FloatingViewListener {
         }
     }
 
-    @Override
-    public int onStartCommand(final Intent intent, int flags, int startId) {
-        int position = intent.getIntExtra("position", 0);
-        int musicID = intent.getIntExtra("id", 0);
-        String title = intent.getStringExtra("title");
-        String artist = intent.getStringExtra("artist");
-        Uri albumArt = intent.getParcelableExtra("artUri");
-
-        setMusicDetails(albumArt, title, artist);
-
-        // create MusicPlayer object and start
-        mp = new MusicPlayer();
-        playMusic(getApplicationContext(), musicID, position);
-
-        // defines the floatingView
-        parcelable = intent.getParcelableExtra(EXTRA_CUTOUT_SAFE_AREA);
-        initFloatingView();
-        setFloatingViewImg(albumArt);
-        drawFloatingView();
-
-        setFloatingViewClickListener();
-        return super.onStartCommand(intent, flags, startId);
-    }
-
     /** starts the PlayerActivity */
     public void setFloatingViewClickListener() {
         iconView.setOnClickListener(new View.OnClickListener() {
+            @TargetApi(Build.VERSION_CODES.LOLLIPOP)
             @Override
             public void onClick(View v) {
-                // go to music detail activity
+                // go to music detail mActivity
                 Intent intent = new Intent(getApplicationContext(), PlayerActivity.class);
                 intent.putExtra("title", title);
                 intent.putExtra("artist", artist);
@@ -112,6 +86,25 @@ public class MusicPlayService extends Service implements FloatingViewListener {
 
     @Override
     public IBinder onBind(Intent intent) {
+        int position = intent.getIntExtra("position", 0);
+        int musicID = intent.getIntExtra("id", 0);
+        String title = intent.getStringExtra("title");
+        String artist = intent.getStringExtra("artist");
+        Uri albumArt = intent.getParcelableExtra("artUri");
+
+        setMusicDetails(albumArt, title, artist);
+
+        // create MusicPlayer object and start
+        mp = new MusicPlayer();
+        playMusic(getApplicationContext(), musicID, position);
+
+        // defines the floatingView
+        parcelable = intent.getParcelableExtra(EXTRA_CUTOUT_SAFE_AREA);
+        initFloatingView();
+        setFloatingViewImg(albumArt);
+        drawFloatingView();
+
+        setFloatingViewClickListener();
         return binder;
     }
 

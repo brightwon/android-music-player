@@ -102,8 +102,7 @@ public class MainActivity extends AppCompatActivity {
             intent.putExtra("position", position);
             intent.putExtra(EXTRA_CUTOUT_SAFE_AREA, FloatingViewManager.findCutoutSafeArea(this));
 
-            // starts and binds the Service
-            ContextCompat.startForegroundService(this, intent);
+            // binds the Service
             bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
         } else {
             requestSystemAlertWindowPermission();
