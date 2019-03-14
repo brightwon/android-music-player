@@ -75,9 +75,6 @@ public class MusicPlayService extends Service implements FloatingViewListener {
         setFloatingViewImg(albumArt);
         drawFloatingView();
 
-        // starts the notification
-        startForeground(NOTIFICATION_ID, createNotification(this, title, artist));
-
         setFloatingViewClickListener();
         return super.onStartCommand(intent, flags, startId);
     }
@@ -138,20 +135,6 @@ public class MusicPlayService extends Service implements FloatingViewListener {
     @Override
     public void onTouchFinished(boolean isFinishing, int x, int y) {
 
-    }
-
-    /** sets the notification builder */
-    private static Notification createNotification(Context context, String title, String artist) {
-        final NotificationCompat.Builder builder = new NotificationCompat.Builder(context,
-                context.getString(R.string.app_name));
-        builder.setSmallIcon(R.mipmap.ic_launcher);
-        builder.setContentTitle(title);
-        builder.setContentText(artist);
-        builder.setOngoing(true);
-        builder.setPriority(NotificationCompat.PRIORITY_MIN);
-        builder.setCategory(NotificationCompat.CATEGORY_SERVICE);
-
-        return builder.build();
     }
 
     /** initializes the new floatingView */
