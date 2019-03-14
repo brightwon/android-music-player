@@ -3,7 +3,6 @@ package com.brightwon.music_player;
 import android.annotation.TargetApi;
 import android.app.Notification;
 import android.app.Service;
-import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -15,7 +14,6 @@ import android.os.Binder;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.Parcelable;
-import android.provider.MediaStore;
 import android.support.v4.app.NotificationCompat;
 import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
@@ -45,7 +43,9 @@ public class MusicPlayService extends Service implements FloatingViewListener {
     public boolean isFloat = false;
 
     public static MusicPlayer mp;
-    private Uri artUri;
+
+    /* music details */
+    private Uri albumArt;
     private String title;
     private String artist;
 
@@ -58,10 +58,12 @@ public class MusicPlayService extends Service implements FloatingViewListener {
     @Override
     public int onStartCommand(final Intent intent, int flags, int startId) {
         int position = intent.getIntExtra("position", 0);
-        final int musicID = intent.getIntExtra("id", 0);
-        final String title = intent.getStringExtra("title");
-        final String artist = intent.getStringExtra("artist");
-        final Uri albumArt = intent.getParcelableExtra("artUri");
+        int musicID = intent.getIntExtra("id", 0);
+        String title = intent.getStringExtra("title");
+        String artist = intent.getStringExtra("artist");
+        Uri albumArt = intent.getParcelableExtra("artUri");
+
+        setMusicDetails(albumArt, title, artist);
 
         // create MusicPlayer object and start
         mp = new MusicPlayer();
@@ -76,25 +78,23 @@ public class MusicPlayService extends Service implements FloatingViewListener {
         // starts the notification
         startForeground(NOTIFICATION_ID, createNotification(this, title, artist));
 
+        setFloatingViewClickListener();
+        return super.onStartCommand(intent, flags, startId);
+    }
+
+    /** starts the PlayerActivity */
+    public void setFloatingViewClickListener() {
         iconView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 // go to music detail activity
                 Intent intent = new Intent(getApplicationContext(), PlayerActivity.class);
-                sendIntent(intent, musicID, title, artist, albumArt);
+                intent.putExtra("title", title);
+                intent.putExtra("artist", artist);
+                intent.putExtra("artUri", albumArt);
+                startActivity(intent);
             }
         });
-        return super.onStartCommand(intent, flags, startId);
-    }
-
-    /** starts the PlayerActivity */
-    public void sendIntent(Intent intent, int id, String title, String artist, Uri albumArt) {
-        intent.putExtra("title", title);
-        intent.putExtra("artist", artist);
-        intent.putExtra("id", id);
-        intent.putExtra("artUri", albumArt);
-
-        startActivity(intent);
     }
 
     /** plays the music in MusicPlayer class */
@@ -104,6 +104,13 @@ public class MusicPlayService extends Service implements FloatingViewListener {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    /** sets music details */
+    public void setMusicDetails(Uri uri, String title, String artist) {
+        this.albumArt = uri;
+        this.title = title;
+        this.artist = artist;
     }
 
     @Override
@@ -119,7 +126,7 @@ public class MusicPlayService extends Service implements FloatingViewListener {
         return super.onUnbind(intent);
     }
 
-    /** releases the objects when the floatingView is removed  */
+    /** releases the objects when the floatingView is removed */
     @Override
     public void onFinishFloatingView() {
         if (manager != null) {

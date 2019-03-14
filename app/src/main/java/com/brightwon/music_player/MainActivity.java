@@ -61,7 +61,7 @@ public class MainActivity extends AppCompatActivity {
         MusicListAdapter.OnItemClickListener mListener = new MusicListAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(View v, int position) {
-                // check if music is playing
+                // check if the Service is running
                 if (isServiceRunning(MusicPlayService.class)) {
                     // change the floatingView image
                     if (mService.isFloat) {
@@ -69,7 +69,8 @@ public class MainActivity extends AppCompatActivity {
                     } else {
                         mService.setNewFloatingView(songs.get(position).albumImg);
                     }
-                    mService.playMusic(getApplicationContext(), songs.get(position).id, position);
+                    // handle the music playback
+                    initAndPlay(position);
                 } else {
                     startMusicService(position);
                 }
@@ -107,6 +108,15 @@ public class MainActivity extends AppCompatActivity {
         } else {
             requestSystemAlertWindowPermission();
         }
+    }
+
+    /** calls the methods in MusicPlayService */
+    private void initAndPlay(int position) {
+        mService.setFloatingViewClickListener();
+        mService.setMusicDetails(songs.get(position).albumImg,
+                songs.get(position).songTitle,
+                songs.get(position).songArtist);
+        mService.playMusic(getApplicationContext(), songs.get(position).id, position);
     }
 
     /** gets the SYSTEM_ALERT_WINDOW permission */
