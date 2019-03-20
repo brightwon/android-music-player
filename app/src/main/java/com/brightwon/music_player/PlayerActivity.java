@@ -6,7 +6,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ImageView;
-import android.widget.ProgressBar;
+import android.widget.SeekBar;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
@@ -15,7 +15,7 @@ public class PlayerActivity extends AppCompatActivity {
 
     TextView titleTextView, artistTextView, playTime, curTime;
     ImageView albumArt, playPauseView, backward, forward, backBtn;
-    ProgressBar progress;
+    SeekBar progress;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
