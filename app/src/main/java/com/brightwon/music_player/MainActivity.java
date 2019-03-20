@@ -2,15 +2,14 @@ package com.brightwon.music_player;
 
 import android.Manifest;
 import android.annotation.TargetApi;
-import android.app.ActivityManager;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
-import android.os.IBinder;
 import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -21,36 +20,51 @@ import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
+import android.util.DisplayMetrics;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Toast;
 
 import com.brightwon.music_player.Model.MusicDataHelper;
+import com.bumptech.glide.Glide;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
+import de.hdodenhof.circleimageview.CircleImageView;
+import jp.co.recruit_lifestyle.android.floatingview.FloatingViewListener;
 import jp.co.recruit_lifestyle.android.floatingview.FloatingViewManager;
 
-import static com.brightwon.music_player.MusicPlayService.EXTRA_CUTOUT_SAFE_AREA;
 
 @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements FloatingViewListener {
 
+    /* related to permissions */
     static final int MY_PERMISSIONS_REQUEST_READ_EXT_STORAGE = 5555;
     static final int MY_PERMISSIONS_REQUEST_SYSTEM_ALERT_WINDOW = 6666;
-
     String storagePermission = Manifest.permission.READ_EXTERNAL_STORAGE;
 
-    private MusicPlayService mService;
-    private boolean mBound = false;
-
+    /* related to recyclerView items */
     private RecyclerView recyclerView;
     private MusicListAdapter adapter;
     private ArrayList<MusicListItem> songs;
 
+    /* model instance for handle a data */
     private MusicDataHelper model = new MusicDataHelper(this);
+
+    /* whether a floatingView exists on the screen */
+    private boolean isFloat = false;
+
+    /* related to floatingView */
+    private CircleImageView iconView;
+    private FloatingViewManager manager;
+    private FloatingViewManager.Options options;
+
+    /* MusicPlayer object */
+    static MusicPlayer mp;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,21 +73,44 @@ public class MainActivity extends AppCompatActivity {
         initAppBar();
         initRecycler();
 
+        // create MusicPlayer instance
+        mp = new MusicPlayer();
+
+        // item click event
         MusicListAdapter.OnItemClickListener mListener = new MusicListAdapter.OnItemClickListener() {
+            @TargetApi(Build.VERSION_CODES.M)
             @Override
             public void onItemClick(View v, int position) {
-                // check if the Service is running
-                if (isServiceRunning(MusicPlayService.class)) {
-                    // change the floatingView image
-                    if (mService.isFloat) {
-                        mService.setFloatingViewImg(songs.get(position).albumImg);
-                    } else {
-                        mService.setNewFloatingView(songs.get(position).albumImg);
+                // check if have permission
+                if (Settings.canDrawOverlays(getApplicationContext())) {
+                    String title = songs.get(position).songTitle;
+                    String artist = songs.get(position).songArtist;
+                    Uri albumUri = songs.get(position).albumImg;
+                    int songId = songs.get(position).id;
+
+                    // check if floatingView already exists
+                    if (!isFloat && iconView == null) {
+                        iconView = (CircleImageView) LayoutInflater.from(getApplicationContext()).
+                                inflate(R.layout.floating_play_widget, null, false);
+                        setFloatingViewClickListener();
+                        manager.addViewToWindow(iconView, options);
+                        isFloat = true;
                     }
-                    // handle the music playback
-                    initAndPlay(position);
+
+                    // set music details and image
+                    mp.setMusicDetails(albumUri, title, artist);
+                    Glide.with(getApplicationContext()).load(albumUri).
+                            override(200,200).into(iconView);
+
+                    // play or pause the music
+                    try {
+                        mp.playMusic(getApplicationContext(), songId, position);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 } else {
-                    startMusicService(position);
+                    // request the permission
+                    requestSystemAlertWindowPermission();
                 }
             }
         };
@@ -86,37 +123,106 @@ public class MainActivity extends AppCompatActivity {
         ArrayList<MusicListItem> list = model.selectData();
         songs.addAll(list);
         adapter.notifyDataSetChanged();
+
+        // initialize FloatingView settings
+        initFloatingView();
     }
 
-    /** starts the floatingView and play the music in Service */
-    @TargetApi(Build.VERSION_CODES.O)
-    public void startMusicService(int position) {
-        // check the permission
-        if (Settings.canDrawOverlays(this)) {
-            Uri artUri = songs.get(position).albumImg;
+    /** starts the PlayerActivity */
+    public void setFloatingViewClickListener() {
+        iconView.setOnClickListener(new View.OnClickListener() {
+            @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+            @Override
+            public void onClick(View v) {
+                // start PlayerActivity
+                Intent intent = new Intent(getApplicationContext(), PlayerActivity.class);
+                intent.putExtra("title", mp.getSongTitle());
+                intent.putExtra("artist", mp.getSongArtist());
+                intent.putExtra("artUri", mp.getAlbumUri());
+                startActivity(intent);
+                overridePendingTransition(R.anim.anim_slide_in_bottom, R.anim.no_animation);
 
-            Intent intent = new Intent(getApplicationContext(), MusicPlayService.class);
-            intent.putExtra("artUri", artUri);
-            intent.putExtra("title", songs.get(position).songTitle);
-            intent.putExtra("artist", songs.get(position).songArtist);
-            intent.putExtra("id", songs.get(position).id);
-            intent.putExtra("position", position);
-            intent.putExtra(EXTRA_CUTOUT_SAFE_AREA, FloatingViewManager.findCutoutSafeArea(this));
+                // hide FloatingView
+                disappearView();
+            }
+        });
+    }
 
-            // binds the Service
-            bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
-        } else {
-            requestSystemAlertWindowPermission();
+    /** sets disappear animation for the floatingView */
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
+    public void disappearView() {
+        iconView.animate().scaleX(0).scaleY(0).setDuration(1000).withEndAction(new Runnable() {
+            @Override
+            public void run() {
+                iconView.setVisibility(View.GONE);
+            }
+        });
+    }
+
+    /** sets appear animation for the floatingView */
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
+    public void appearView() {
+        iconView.animate().scaleX(1).scaleY(1).setDuration(750).withStartAction(new Runnable() {
+            @Override
+            public void run() {
+                iconView.setVisibility(View.VISIBLE);
+            }
+        });
+    }
+
+    /** sets the floatingView settings */
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+    public void initFloatingView() {
+
+        DisplayMetrics metrics = new DisplayMetrics();
+        WindowManager windowManager = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
+        windowManager.getDefaultDisplay().getMetrics(metrics);
+
+        // sets the trash icon size and alpha
+        manager = new FloatingViewManager(getApplicationContext(), this);
+        Bitmap bitmap = ((BitmapDrawable) getDrawable(R.drawable.stop)).getBitmap();
+        Drawable mDrawable = new BitmapDrawable(getResources(), Bitmap.createScaledBitmap(bitmap,
+                210, 210, true));
+        mDrawable.setAlpha(150);
+        manager.setFixedTrashIconImage(mDrawable);
+        manager.setSafeInsetRect(FloatingViewManager.findCutoutSafeArea(this));
+
+        // sets the floatingView location
+        // horizontal : right side, vertical : 5% from bottom
+        options = new FloatingViewManager.Options();
+        options.floatingViewX = metrics.widthPixels;
+        options.floatingViewY = (int) (metrics.heightPixels * 0.05);
+    }
+
+    /** called after finish the FloatingView */
+    @Override
+    public void onFinishFloatingView() {
+        mp.stop();
+        manager.removeAllViewToWindow();
+        iconView = null;
+        isFloat = false;
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // exit music and floatingView
+        manager.removeAllViewToWindow();
+        mp.release();
+    }
+
+    @Override
+    protected void onStart() {
+        if (mp.isPlaying()) {
+            // redraw the floatingView
+            appearView();
         }
+        super.onStart();
     }
 
-    /** calls the methods in MusicPlayService */
-    private void initAndPlay(int position) {
-        mService.setFloatingViewClickListener();
-        mService.setMusicDetails(songs.get(position).albumImg,
-                songs.get(position).songTitle,
-                songs.get(position).songArtist);
-        mService.playMusic(getApplicationContext(), songs.get(position).id, position);
+    @Override
+    public void onTouchFinished(boolean isFinishing, int x, int y) {
+
     }
 
     /** gets the SYSTEM_ALERT_WINDOW permission */
@@ -141,22 +247,6 @@ public class MainActivity extends AppCompatActivity {
         }
         super.onActivityResult(requestCode, resultCode, data);
     }
-
-    /** defines callback for the Service binding */
-    private ServiceConnection mConnection = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName name, IBinder service) {
-            MusicPlayService.LocalBinder binder = (MusicPlayService.LocalBinder) service;
-            mService = binder.getService();
-            mBound = true;
-            mService.getMainActivity(MainActivity.this);
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName name) {
-            mBound = false;
-        }
-    };
 
     /** gets the music list from local storage in device. */
     public void getMusicList() {
@@ -200,18 +290,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    /** check if Service is running */
-    private boolean isServiceRunning(Class<?> serviceClass) {
-        ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
-        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
-            if (serviceClass.getName().equals(service.service.getClassName())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-
     /** initializes the appBar */
     public void initAppBar() {
         Toolbar toolBar = findViewById(R.id.toolbar);
@@ -239,7 +317,6 @@ public class MainActivity extends AppCompatActivity {
         recyclerView.addItemDecoration(dividerItemDecoration);
     }
 
-
     /** creates the toolBar menu item */
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -256,23 +333,5 @@ public class MainActivity extends AppCompatActivity {
         } else {
             return super.onOptionsItemSelected(item);
         }
-    }
-
-    /** unbinds Service */
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        if (mBound) {
-            unbindService(mConnection);
-            mBound = false;
-        }
-    }
-
-    @Override
-    protected void onStart() {
-        if (isServiceRunning(MusicPlayService.class)) {
-            mService.appearView();
-        }
-        super.onStart();
     }
 }

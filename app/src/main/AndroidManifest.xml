@@ -25,11 +25,10 @@
             </intent-filter>
         </activity>
 
-        <service
-            android:name=".MusicPlayService"
-            android:exported="false" />
-
-        <activity android:name=".PlayerActivity"></activity>
+        <activity
+            android:name=".PlayerActivity"
+            android:screenOrientation="portrait">
+        </activity>
     </application>
 
 </manifest>

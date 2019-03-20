@@ -15,15 +15,18 @@ import com.bumptech.glide.Glide;
 
 import java.util.concurrent.TimeUnit;
 
-import static com.brightwon.music_player.MusicPlayService.mp;
+import static com.brightwon.music_player.MainActivity.mp;
 
 public class PlayerActivity extends AppCompatActivity {
 
+    /* views on the screen */
     private TextView titleTextView, artistTextView, playTime, curTime;
     private ImageView albumArt, playPauseView, backward, forward, backBtn;
     private SeekBar progress;
 
-    private Handler mHandler = new Handler();
+    /* related to update music progress */
+    private Handler mHandler;
+    private Runnable runnable;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,16 +38,28 @@ public class PlayerActivity extends AppCompatActivity {
         Uri coverUri = intent.getParcelableExtra("artUri");
         String title = intent.getStringExtra("title");
         String artist = intent.getStringExtra("artist");
+
+        // set text and image
         setInfo(coverUri, title, artist);
 
-        // back button click listener
+        // back button click event
         setBackEventClickListener();
 
         // set seekBar settings
         initSeekBar();
 
         // set thread for updating seekBar
-        chaseSeekBar();
+        mHandler = new Handler();
+        runnable = new Runnable() {
+            @Override
+            public void run() {
+                progress.setProgress(mp.getCurrentPosition());
+                mHandler.postDelayed(this, 1000);
+            }
+        };
+
+        // updates seekBar for every seconds
+        runnable.run();
     }
 
     /** sets SeekBar settings */
@@ -62,17 +77,6 @@ public class PlayerActivity extends AppCompatActivity {
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
                 mp.seekTo(progress.getProgress());
-            }
-        });
-    }
-
-    /** updates seekBar for every seconds */
-    private void chaseSeekBar() {
-        PlayerActivity.this.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                progress.setProgress(mp.getCurrentPosition());
-                mHandler.postDelayed(this, 1000);
             }
         });
     }
@@ -125,5 +129,12 @@ public class PlayerActivity extends AppCompatActivity {
                 overridePendingTransition(R.anim.no_animation, R.anim.anim_slide_out_bottom);
             }
         });
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        // stop thread
+        mHandler.removeCallbacks(runnable);
     }
 }
