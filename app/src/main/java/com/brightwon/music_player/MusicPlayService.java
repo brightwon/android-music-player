@@ -18,8 +18,6 @@ import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager;
-import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
 
 import com.bumptech.glide.Glide;
 
@@ -105,7 +103,7 @@ public class MusicPlayService extends Service implements FloatingViewListener {
         iconView.animate().scaleX(0).scaleY(0).setDuration(1000).withEndAction(new Runnable() {
             @Override
             public void run() {
-                iconView.setVisibility(View.INVISIBLE);
+                iconView.setVisibility(View.GONE);
             }
         });
     }
