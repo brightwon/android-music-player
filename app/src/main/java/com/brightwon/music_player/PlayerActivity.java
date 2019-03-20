@@ -1,23 +1,20 @@
 package com.brightwon.music_player;
 
-import android.annotation.TargetApi;
 import android.content.Intent;
 import android.net.Uri;
-import android.os.Build;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 
-import static com.brightwon.music_player.MusicPlayService.mp;
-
 public class PlayerActivity extends AppCompatActivity {
 
     TextView titleTextView, artistTextView, playTime, curTime;
-    ImageView albumArt, playPauseView, backward, forward;
+    ImageView albumArt, playPauseView, backward, forward, backBtn;
     ProgressBar progress;
 
     @Override
@@ -32,6 +29,9 @@ public class PlayerActivity extends AppCompatActivity {
         String artist = intent.getStringExtra("artist");
 
         setInfo(coverUri, title, artist);
+
+        // back button click listener
+        setBackEventClickListener();
     }
 
     /** initializes all view */
@@ -45,6 +45,7 @@ public class PlayerActivity extends AppCompatActivity {
         backward = findViewById(R.id.player_backward);
         forward = findViewById(R.id.player_forward);
         progress = findViewById(R.id.player_progress);
+        backBtn = findViewById(R.id.back_btn);
     }
 
     /** sets music details */
@@ -52,5 +53,24 @@ public class PlayerActivity extends AppCompatActivity {
         Glide.with(this).load(uri).into(albumArt);
         titleTextView.setText(title);
         artistTextView.setText(artist);
+    }
+
+    /** destroy this Activity with transition Animation */
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        finish();
+        overridePendingTransition(R.anim.no_animation, R.anim.anim_slide_out_bottom);
+    }
+
+    /** destroy this Activity with transition Animation */
+    public void setBackEventClickListener() {
+        backBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                finish();
+                overridePendingTransition(R.anim.no_animation, R.anim.anim_slide_out_bottom);
+            }
+        });
     }
 }

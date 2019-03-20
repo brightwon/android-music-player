@@ -21,6 +21,7 @@ import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -148,6 +149,7 @@ public class MainActivity extends AppCompatActivity {
             MusicPlayService.LocalBinder binder = (MusicPlayService.LocalBinder) service;
             mService = binder.getService();
             mBound = true;
+            mService.getMainActivity(MainActivity.this);
         }
 
         @Override
@@ -155,7 +157,6 @@ public class MainActivity extends AppCompatActivity {
             mBound = false;
         }
     };
-
 
     /** gets the music list from local storage in device. */
     public void getMusicList() {
@@ -198,7 +199,6 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
-
 
     /** check if Service is running */
     private boolean isServiceRunning(Class<?> serviceClass) {
@@ -266,5 +266,13 @@ public class MainActivity extends AppCompatActivity {
             unbindService(mConnection);
             mBound = false;
         }
+    }
+
+    @Override
+    protected void onStart() {
+        if (isServiceRunning(MusicPlayService.class)) {
+            mService.appearView();
+        }
+        super.onStart();
     }
 }

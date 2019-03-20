@@ -1,6 +1,7 @@
 package com.brightwon.music_player;
 
 import android.annotation.TargetApi;
+import android.app.Activity;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -17,6 +18,8 @@ import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 
 import com.bumptech.glide.Glide;
 
@@ -46,42 +49,12 @@ public class MusicPlayService extends Service implements FloatingViewListener {
     private String title;
     private String artist;
 
+    private Activity mActivity;
+
     public class LocalBinder extends Binder {
         MusicPlayService getService() {
             return MusicPlayService.this;
         }
-    }
-
-    /** starts the PlayerActivity */
-    public void setFloatingViewClickListener() {
-        iconView.setOnClickListener(new View.OnClickListener() {
-            @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-            @Override
-            public void onClick(View v) {
-                // go to music detail mActivity
-                Intent intent = new Intent(getApplicationContext(), PlayerActivity.class);
-                intent.putExtra("title", title);
-                intent.putExtra("artist", artist);
-                intent.putExtra("artUri", albumArt);
-                startActivity(intent);
-            }
-        });
-    }
-
-    /** plays the music in MusicPlayer class */
-    public void playMusic(Context context, int id, int position) {
-        try {
-            mp.playMusic(context, id, position);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    /** sets music details */
-    public void setMusicDetails(Uri uri, String title, String artist) {
-        this.albumArt = uri;
-        this.title = title;
-        this.artist = artist;
     }
 
     @Override
@@ -106,6 +79,67 @@ public class MusicPlayService extends Service implements FloatingViewListener {
 
         setFloatingViewClickListener();
         return binder;
+    }
+
+    /** starts the PlayerActivity */
+    public void setFloatingViewClickListener() {
+        iconView.setOnClickListener(new View.OnClickListener() {
+            @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+            @Override
+            public void onClick(View v) {
+                // start PlayerActivity
+                Intent intent = new Intent(getApplicationContext(), PlayerActivity.class);
+                intent.putExtra("title", title);
+                intent.putExtra("artist", artist);
+                intent.putExtra("artUri", albumArt);
+                startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+                mActivity.overridePendingTransition(R.anim.anim_slide_in_bottom, R.anim.no_animation);
+                disappearView();
+            }
+        });
+    }
+
+    /** sets disappear animation for the floatingView */
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
+    public void disappearView() {
+        iconView.animate().scaleX(0).scaleY(0).setDuration(1000).withEndAction(new Runnable() {
+            @Override
+            public void run() {
+                iconView.setVisibility(View.INVISIBLE);
+            }
+        });
+    }
+
+    /** sets appear animation for the floatingView */
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
+    public void appearView() {
+        iconView.animate().scaleX(1).scaleY(1).setDuration(750).withStartAction(new Runnable() {
+            @Override
+            public void run() {
+                iconView.setVisibility(View.VISIBLE);
+            }
+        });
+    }
+
+    /** plays the music in MusicPlayer class */
+    public void playMusic(Context context, int id, int position) {
+        try {
+            mp.playMusic(context, id, position);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /** sets music details */
+    public void setMusicDetails(Uri uri, String title, String artist) {
+        this.albumArt = uri;
+        this.title = title;
+        this.artist = artist;
+    }
+
+    /** gets MainActivity reference */
+    public void getMainActivity(Activity activity) {
+        this.mActivity = activity;
     }
 
     /** finish the MusicPlayService */
@@ -139,6 +173,7 @@ public class MusicPlayService extends Service implements FloatingViewListener {
 
     /** sets the floatingView image */
     public void setFloatingViewImg(Uri uri) {
+        iconView.setVisibility(View.VISIBLE);
         Glide.with(this).load(uri).override(200,200).into(iconView);
     }
 
