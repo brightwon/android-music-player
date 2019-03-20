@@ -27,7 +27,6 @@ public class PlayerActivity extends AppCompatActivity {
         Uri coverUri = intent.getParcelableExtra("artUri");
         String title = intent.getStringExtra("title");
         String artist = intent.getStringExtra("artist");
-
         setInfo(coverUri, title, artist);
 
         // back button click listener

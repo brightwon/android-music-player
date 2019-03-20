@@ -7,7 +7,7 @@
     <color name="white">#FFFFFF</color>
     <color name="strokeGray">#DCDCDC</color>
     <color name="gray">#B2B2B2</color>
-    <color name="selected">#C4453E</color>
-    <color name="orangeColor">#F6BB43</color>
-    <color name="progress_background">#E9E9E9</color>
+    <color name="lightOrange">#F6BB43</color>
+    <color name="cloudyWhite">#E9E9E9</color>
+    <color name="warmScarlet">#F3716C</color>
 </resources>
