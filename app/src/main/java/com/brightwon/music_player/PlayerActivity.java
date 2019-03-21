@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Handler;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -13,6 +14,7 @@ import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 
+import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 import static com.brightwon.music_player.MainActivity.mp;
@@ -38,6 +40,8 @@ public class PlayerActivity extends AppCompatActivity {
         Uri coverUri = intent.getParcelableExtra("artUri");
         String title = intent.getStringExtra("title");
         String artist = intent.getStringExtra("artist");
+        int position = intent.getIntExtra("position", -1);
+        int id = intent.getIntExtra("id", -1);
 
         // set text and image
         setInfo(coverUri, title, artist);
@@ -47,6 +51,12 @@ public class PlayerActivity extends AppCompatActivity {
 
         // set seekBar settings
         initSeekBar();
+
+        // check views status
+        switchPlayView();
+
+        // click event about music playback
+        playPause(id, position);
 
         // set thread for updating seekBar
         mHandler = new Handler();
@@ -60,6 +70,32 @@ public class PlayerActivity extends AppCompatActivity {
 
         // updates seekBar for every seconds
         runnable.run();
+    }
+
+    /** play click event */
+    private void playPause(final int id, final int position) {
+        playPauseView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                try {
+                    mp.playMusic(getApplicationContext(), id, position);
+                    switchPlayView();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+    }
+
+    /** switch on/off playPauseView  */
+    private void switchPlayView() {
+        if (mp.isPlaying()) {
+            playPauseView.setImageDrawable(ContextCompat.getDrawable(
+                    getApplicationContext(), R.drawable.pause));
+        } else {
+            playPauseView.setImageDrawable(ContextCompat.getDrawable(
+                    getApplicationContext(), R.drawable.play));
+        }
     }
 
     /** sets SeekBar settings */

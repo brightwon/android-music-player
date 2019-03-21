@@ -20,8 +20,9 @@ public class MusicPlayer extends MediaPlayer {
     private String title;
     private String artist;
 
-    /* whether music is stop */
+    /* whether music is stopped */
     private boolean isStopped;
+    private boolean isPaused;
 
     public MusicPlayer() {
         this.setAudioStreamType(AudioManager.STREAM_MUSIC);
@@ -35,19 +36,21 @@ public class MusicPlayer extends MediaPlayer {
         if (isPlaying()) {
             // playing
             if (current == previous) {
+                // same item. pause
                 pause();
             } else {
-                // other click
+                // other item. play
                 playOthers(context, uri);
             }
         } else {
             // not playing
             if (previous == -1) {
-                // first start
+                // first click. start
                 setDataSource(context, uri);
                 prepare();
                 start();
             } else if (previous == current) {
+                // same item
                 if (isStopped) {
                     playOthers(context, uri);
                 } else {
@@ -55,7 +58,7 @@ public class MusicPlayer extends MediaPlayer {
                     start();
                 }
             } else {
-                // other click
+                // other item. play
                 playOthers(context, uri);
             }
         }
@@ -64,15 +67,35 @@ public class MusicPlayer extends MediaPlayer {
     }
 
     @Override
-    public void stop() throws IllegalStateException {
-        super.stop();
-        isStopped = true;
-    }
-
-    @Override
     public void prepare() throws IOException, IllegalStateException {
         super.prepare();
         isStopped = false;
+        isPaused = false;
+    }
+
+    @Override
+    public void start() throws IllegalStateException {
+        super.start();
+        isStopped = false;
+        isPaused = false;
+    }
+
+    @Override
+    public void stop() throws IllegalStateException {
+        super.stop();
+        isStopped = true;
+        isPaused = false;
+    }
+
+    @Override
+    public void pause() throws IllegalStateException {
+        super.pause();
+        isStopped = false;
+        isPaused = true;
+    }
+
+    public boolean isPaused() {
+        return isPaused;
     }
 
     private void playOthers(Context context, Uri uri) throws IOException {

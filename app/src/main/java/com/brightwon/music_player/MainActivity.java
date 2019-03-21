@@ -92,7 +92,6 @@ public class MainActivity extends AppCompatActivity implements FloatingViewListe
                     if (!isFloat && iconView == null) {
                         iconView = (CircleImageView) LayoutInflater.from(getApplicationContext()).
                                 inflate(R.layout.floating_play_widget, null, false);
-                        setFloatingViewClickListener();
                         manager.addViewToWindow(iconView, options);
                         isFloat = true;
                     }
@@ -101,6 +100,9 @@ public class MainActivity extends AppCompatActivity implements FloatingViewListe
                     mp.setMusicDetails(albumUri, title, artist);
                     Glide.with(getApplicationContext()).load(albumUri).
                             override(200,200).into(iconView);
+
+                    // set floatingView click event
+                    setFloatingViewClickListener(songId, position);
 
                     // play or pause the music
                     try {
@@ -129,7 +131,7 @@ public class MainActivity extends AppCompatActivity implements FloatingViewListe
     }
 
     /** starts the PlayerActivity */
-    public void setFloatingViewClickListener() {
+    public void setFloatingViewClickListener(final int songId, final int position) {
         iconView.setOnClickListener(new View.OnClickListener() {
             @TargetApi(Build.VERSION_CODES.LOLLIPOP)
             @Override
@@ -139,6 +141,8 @@ public class MainActivity extends AppCompatActivity implements FloatingViewListe
                 intent.putExtra("title", mp.getSongTitle());
                 intent.putExtra("artist", mp.getSongArtist());
                 intent.putExtra("artUri", mp.getAlbumUri());
+                intent.putExtra("position", position);
+                intent.putExtra("id", songId);
                 startActivity(intent);
                 overridePendingTransition(R.anim.anim_slide_in_bottom, R.anim.no_animation);
 
@@ -213,7 +217,7 @@ public class MainActivity extends AppCompatActivity implements FloatingViewListe
 
     @Override
     protected void onStart() {
-        if (mp.isPlaying()) {
+        if (mp.isPlaying() || mp.isPaused()) {
             // redraw the floatingView
             appearView();
         }
