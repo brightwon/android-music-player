@@ -2,7 +2,6 @@ package com.brightwon.music_player;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Handler;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -15,8 +14,10 @@ import android.widget.TextView;
 import com.bumptech.glide.Glide;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 
+import static com.brightwon.music_player.MainActivity.FEED_BACK_FOR_PLAYER_ACTIVITY;
 import static com.brightwon.music_player.MainActivity.mp;
 
 public class PlayerActivity extends AppCompatActivity {
@@ -30,6 +31,12 @@ public class PlayerActivity extends AppCompatActivity {
     private Handler mHandler;
     private Runnable runnable;
 
+    /* music list */
+    ArrayList<MusicListItem> songs;
+
+    /* current position */
+    int mPosition;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -37,14 +44,13 @@ public class PlayerActivity extends AppCompatActivity {
         initView();
 
         Intent intent = getIntent();
-        Uri coverUri = intent.getParcelableExtra("artUri");
-        String title = intent.getStringExtra("title");
-        String artist = intent.getStringExtra("artist");
-        int position = intent.getIntExtra("position", -1);
-        int id = intent.getIntExtra("id", -1);
+        songs = (ArrayList<MusicListItem>) intent.getSerializableExtra("song_list");
+        mPosition = intent.getIntExtra("position", -1);
 
         // set text and image
-        setInfo(coverUri, title, artist);
+        setInfo(songs.get(mPosition).albumImg,
+                songs.get(mPosition).songTitle,
+                songs.get(mPosition).songArtist);
 
         // back button click event
         setBackEventClickListener();
@@ -55,8 +61,10 @@ public class PlayerActivity extends AppCompatActivity {
         // check views status
         switchPlayView();
 
-        // click event about music playback
-        playPause(id, position);
+        // music playback click event
+        playPause();
+        nextPlay();
+        prevPlay();
 
         // set thread for updating seekBar
         mHandler = new Handler();
@@ -72,19 +80,69 @@ public class PlayerActivity extends AppCompatActivity {
         runnable.run();
     }
 
+    /** play previous music */
+    private void prevPlay() {
+        backward.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                try {
+                    mPosition = handlePosition(songs, mPosition - 1);
+                    setInfo(songs.get(mPosition).albumImg,
+                            songs.get(mPosition).songTitle,
+                            songs.get(mPosition).songArtist);
+                    mp.playMusic(getApplicationContext(), songs.get(mPosition).id, mPosition);
+                    switchPlayView();
+                    toZeroSeek();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+    }
+
+    /** play next music */
+    private void nextPlay() {
+        forward.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                try {
+                    mPosition = handlePosition(songs, mPosition + 1);
+                    setInfo(songs.get(mPosition).albumImg,
+                            songs.get(mPosition).songTitle,
+                            songs.get(mPosition).songArtist);
+                    mp.playMusic(getApplicationContext(), songs.get(mPosition).id, mPosition);
+                    switchPlayView();
+                    toZeroSeek();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+    }
+
     /** play click event */
-    private void playPause(final int id, final int position) {
+    private void playPause() {
         playPauseView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 try {
-                    mp.playMusic(getApplicationContext(), id, position);
+                    mp.playMusic(getApplicationContext(), songs.get(mPosition).id, mPosition);
                     switchPlayView();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
         });
+    }
+
+    /** adjusts out of range position */
+    private int handlePosition(ArrayList songs, int position) {
+        if (position == songs.size()) {
+            position = 0;
+        } else if (position == -1) {
+            position = songs.size() - 1;
+        }
+        return position;
     }
 
     /** switch on/off playPauseView  */
@@ -96,6 +154,12 @@ public class PlayerActivity extends AppCompatActivity {
             playPauseView.setImageDrawable(ContextCompat.getDrawable(
                     getApplicationContext(), R.drawable.play));
         }
+    }
+
+    /** sets zero seekBar and current time */
+    private void toZeroSeek() {
+        progress.setProgress(0);
+        curTime.setText("00:00");
     }
 
     /** sets SeekBar settings */
@@ -132,7 +196,7 @@ public class PlayerActivity extends AppCompatActivity {
     }
 
     /** sets music details */
-    private void setInfo(Uri uri, String title, String artist) {
+    private void setInfo(String uri, String title, String artist) {
         Glide.with(this).load(uri).into(albumArt);
         titleTextView.setText(title);
         artistTextView.setText(artist);
@@ -151,6 +215,10 @@ public class PlayerActivity extends AppCompatActivity {
     /** destroy this Activity with transition Animation */
     @Override
     public void onBackPressed() {
+        Intent intent = new Intent();
+        intent.putExtra("album_uri", songs.get(mPosition).albumImg);
+        intent.putExtra("position", mPosition);
+        setResult(FEED_BACK_FOR_PLAYER_ACTIVITY, intent);
         super.onBackPressed();
         finish();
         overridePendingTransition(R.anim.no_animation, R.anim.anim_slide_out_bottom);
@@ -161,6 +229,10 @@ public class PlayerActivity extends AppCompatActivity {
         backBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                Intent intent = new Intent();
+                intent.putExtra("album_uri", songs.get(mPosition).albumImg);
+                intent.putExtra("position", mPosition);
+                setResult(FEED_BACK_FOR_PLAYER_ACTIVITY, intent);
                 finish();
                 overridePendingTransition(R.anim.no_animation, R.anim.anim_slide_out_bottom);
             }

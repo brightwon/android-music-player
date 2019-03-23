@@ -21,7 +21,6 @@ public class MusicListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     private RecyclerView mRecyclerView;
     private SongHolder preHolder;
     private int prev = -1;
-    private boolean stop;
     private Context context;
 
     MusicListAdapter(ArrayList<MusicListItem> songItems, OnItemClickListener listener) {
@@ -55,8 +54,9 @@ public class MusicListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
 
         if(currItem.playStatus) {
             holder.playGraph.setVisibility(View.VISIBLE);
-            if(stop) {
+            if(currItem.pauseStatus) {
                 holder.playGraph.getIndicator().stop();
+                holder.playGraph.invalidate();
             }
         } else {
             holder.playGraph.setVisibility(View.GONE);
@@ -70,40 +70,42 @@ public class MusicListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
                 mListener.onItemClick(v, curr);
 
                 // play animation logic
-                if (!currItem.playStatus && prev == -1) {
-                    // first click
-                    holder.playGraph.setVisibility(View.VISIBLE);
-                    currItem.playStatus = true;
-                    preHolder = (SongHolder) mRecyclerView.findViewHolderForAdapterPosition(curr);
-
-                } else if (currItem.playStatus && prev == curr){
-                    // same item click
-                    if (holder.playGraph.getIndicator().isRunning()) {
-                        // if it is playing.. stop !
-                        holder.playGraph.getIndicator().stop();
-                        stop = true;
-                    } else {
-                        // if it was paused.. replay !
-                        holder.playGraph.getIndicator().start();
-                        stop = false;
-                    }
-                    currItem.playStatus = true;
-                    preHolder = (SongHolder) mRecyclerView.findViewHolderForAdapterPosition(curr);
-
-                } else {
-                    // other item click
-                    preHolder.playGraph.setVisibility(View.GONE);
-                    songItems.get(prev).playStatus = false;
-
-                    holder.playGraph.setVisibility(View.VISIBLE);
-                    currItem.playStatus = true;
-
-                    preHolder = (SongHolder) mRecyclerView.findViewHolderForAdapterPosition(curr);
-                }
-
-                prev = curr;
+                animatePlay(holder, curr);
             }
         });
+    }
+
+    /** switch on/off music play animation */
+    public void animatePlay(SongHolder holder, int curr) {
+        if (!songItems.get(curr).playStatus && prev == -1) {
+            // first click
+            holder.playGraph.setVisibility(View.VISIBLE);
+            songItems.get(curr).playStatus = true;
+
+        } else if (songItems.get(curr).playStatus && prev == curr){
+            // same item click
+            if (holder.playGraph.getIndicator().isRunning()) {
+                // is playing.. pause !
+                holder.playGraph.getIndicator().stop();
+                songItems.get(curr).pauseStatus = true;
+            } else {
+                // is paused.. replay !
+                holder.playGraph.getIndicator().start();
+                songItems.get(curr).pauseStatus = false;
+            }
+            songItems.get(curr).playStatus = true;
+
+        } else {
+            // other item click
+            preHolder.playGraph.setVisibility(View.GONE);
+            songItems.get(prev).playStatus = false;
+
+            holder.playGraph.setVisibility(View.VISIBLE);
+            songItems.get(curr).playStatus = true;
+
+        }
+        preHolder = (SongHolder) mRecyclerView.findViewHolderForAdapterPosition(curr);
+        prev = curr;
     }
 
     @Override

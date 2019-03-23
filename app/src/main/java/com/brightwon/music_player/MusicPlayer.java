@@ -15,11 +15,6 @@ public class MusicPlayer extends MediaPlayer {
     private int previous = -1;
     private int current = -1;
 
-    /* music details */
-    private Uri albumUri;
-    private String title;
-    private String artist;
-
     /* whether music is stopped */
     private boolean isStopped;
     private boolean isPaused;
@@ -103,24 +98,5 @@ public class MusicPlayer extends MediaPlayer {
         setDataSource(context, uri);
         prepare();
         start();
-    }
-
-    /** sets music details from MainActivity */
-    public void setMusicDetails(Uri albumUri, String title, String artist) {
-        this.albumUri = albumUri;
-        this.title = title;
-        this.artist = artist;
-    }
-
-    public Uri getAlbumUri() {
-        return this.albumUri;
-    }
-
-    public String getSongTitle() {
-        return this.title;
-    }
-
-    public String getSongArtist() {
-        return this.artist;
     }
 }

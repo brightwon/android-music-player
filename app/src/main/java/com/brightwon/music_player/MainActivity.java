@@ -8,7 +8,6 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.net.Uri;
 import android.os.Build;
 import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
@@ -47,10 +46,16 @@ public class MainActivity extends AppCompatActivity implements FloatingViewListe
     static final int MY_PERMISSIONS_REQUEST_SYSTEM_ALERT_WINDOW = 6666;
     String storagePermission = Manifest.permission.READ_EXTERNAL_STORAGE;
 
+    /* requestCode from PlayerActivity */
+    static final int FEED_BACK_FOR_PLAYER_ACTIVITY = 7777;
+
     /* related to recyclerView items */
     private RecyclerView recyclerView;
     private MusicListAdapter adapter;
     private ArrayList<MusicListItem> songs;
+
+    /* current position */
+    int mPosition;
 
     /* model instance for handle a data */
     private MusicDataHelper model = new MusicDataHelper(this);
@@ -83,10 +88,9 @@ public class MainActivity extends AppCompatActivity implements FloatingViewListe
             public void onItemClick(View v, int position) {
                 // check if have permission
                 if (Settings.canDrawOverlays(getApplicationContext())) {
-                    String title = songs.get(position).songTitle;
-                    String artist = songs.get(position).songArtist;
-                    Uri albumUri = songs.get(position).albumImg;
-                    int songId = songs.get(position).id;
+                    mPosition = position;
+                    String albumUri = songs.get(mPosition).albumImg;
+                    int songId = songs.get(mPosition).id;
 
                     // check if floatingView already exists
                     if (!isFloat && iconView == null) {
@@ -96,17 +100,16 @@ public class MainActivity extends AppCompatActivity implements FloatingViewListe
                         isFloat = true;
                     }
 
-                    // set music details and image
-                    mp.setMusicDetails(albumUri, title, artist);
+                    // set floatingView image
                     Glide.with(getApplicationContext()).load(albumUri).
                             override(200,200).into(iconView);
 
                     // set floatingView click event
-                    setFloatingViewClickListener(songId, position);
+                    setFloatingViewClickListener();
 
                     // play or pause the music
                     try {
-                        mp.playMusic(getApplicationContext(), songId, position);
+                        mp.playMusic(getApplicationContext(), songId, mPosition);
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -131,23 +134,21 @@ public class MainActivity extends AppCompatActivity implements FloatingViewListe
     }
 
     /** starts the PlayerActivity */
-    public void setFloatingViewClickListener(final int songId, final int position) {
+    public void setFloatingViewClickListener() {
         iconView.setOnClickListener(new View.OnClickListener() {
             @TargetApi(Build.VERSION_CODES.LOLLIPOP)
             @Override
             public void onClick(View v) {
                 // start PlayerActivity
                 Intent intent = new Intent(getApplicationContext(), PlayerActivity.class);
-                intent.putExtra("title", mp.getSongTitle());
-                intent.putExtra("artist", mp.getSongArtist());
-                intent.putExtra("artUri", mp.getAlbumUri());
-                intent.putExtra("position", position);
-                intent.putExtra("id", songId);
-                startActivity(intent);
+                intent.putExtra("position", mPosition);
+                intent.putExtra("song_list", songs);
+                startActivityForResult(intent, FEED_BACK_FOR_PLAYER_ACTIVITY);
                 overridePendingTransition(R.anim.anim_slide_in_bottom, R.anim.no_animation);
 
                 // hide FloatingView
                 disappearView();
+                songs.get(mPosition).playStatus = false;
             }
         });
     }
@@ -216,15 +217,6 @@ public class MainActivity extends AppCompatActivity implements FloatingViewListe
     }
 
     @Override
-    protected void onStart() {
-        if (mp.isPlaying() || mp.isPaused()) {
-            // redraw the floatingView
-            appearView();
-        }
-        super.onStart();
-    }
-
-    @Override
     public void onTouchFinished(boolean isFinishing, int x, int y) {
 
     }
@@ -247,6 +239,21 @@ public class MainActivity extends AppCompatActivity implements FloatingViewListe
                 } else {
                     Toast.makeText(this, "권한을 추가해야 재생할 수 있어요!", Toast.LENGTH_SHORT).show();
                 }
+                break;
+            case FEED_BACK_FOR_PLAYER_ACTIVITY :
+                mPosition = data.getIntExtra("position", -1);
+                songs.get(mPosition).playStatus = true;
+                adapter.notifyDataSetChanged();
+
+                // set floatingView image
+                Glide.with(getApplicationContext()).load(data.getStringExtra("album_uri")).
+                        override(200,200).into(iconView);
+
+                // redraw the floatingView
+                appearView();
+
+                // make the last position item visible
+                recyclerView.scrollToPosition(mPosition);
                 break;
         }
         super.onActivityResult(requestCode, resultCode, data);

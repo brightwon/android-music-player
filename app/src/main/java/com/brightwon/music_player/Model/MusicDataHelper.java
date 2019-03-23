@@ -1,7 +1,6 @@
 package com.brightwon.music_player.Model;
 
 import android.content.ContentResolver;
-import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
@@ -49,17 +48,17 @@ public class MusicDataHelper {
         if (cursor != null) {
             while (cursor.moveToNext()) {
                 if (cursor.getInt(0) != 0) {
-                    Uri artUri = Uri.parse("content://media/external/audio/albumart");
 
                     int id = cursor.getInt(1);
-                    Uri uri = ContentUris.withAppendedId(artUri, cursor.getInt(2));
+                    String uri = "content://media/external/audio/albumart/" +
+                            cursor.getString(2);
                     String title = cursor.getString(3);
                     String artist = cursor.getString(4);
 
                     // save list in SQLite
-                    insertData(id, String.valueOf(uri), title, artist);
+                    insertData(id, uri, title, artist);
 
-                    metaList.add(new MusicListItem(id, uri, title, artist, false));
+                    metaList.add(new MusicListItem(id, uri, title, artist, false, false));
                 }
             }
             cursor.close();
@@ -110,11 +109,11 @@ public class MusicDataHelper {
         ArrayList<MusicListItem> songs = new ArrayList<>();
         while(cursor.moveToNext()) {
             int id = cursor.getInt(0);
-            Uri uri = Uri.parse(cursor.getString(1));
+            String uri = cursor.getString(1);
             String title = cursor.getString(2);
             String artist = cursor.getString(3);
 
-            songs.add(new MusicListItem(id, uri, title, artist, false));
+            songs.add(new MusicListItem(id, uri, title, artist, false, false));
         }
         cursor.close();
 

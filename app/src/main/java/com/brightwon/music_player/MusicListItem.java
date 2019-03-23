@@ -1,21 +1,23 @@
 package com.brightwon.music_player;
 
-import android.net.Uri;
+import java.io.Serializable;
 
-public class MusicListItem {
+public class MusicListItem implements Serializable {
 
-    Uri albumImg;
+    int id;
+    String albumImg;
     String songTitle;
     String songArtist;
-    int id;
     boolean playStatus;
+    boolean pauseStatus;
 
-    public MusicListItem(int id, Uri albumImg, String songTitle, String songArtist, boolean playStatus){
+    public MusicListItem(int id, String albumImg, String songTitle, String songArtist, boolean playStatus, boolean pauseStatus){
         this.id = id;
         this.albumImg = albumImg;
         this.songTitle = songTitle;
         this.songArtist = songArtist;
         this.playStatus = playStatus;
+        this.pauseStatus = pauseStatus;
     }
 
     public String getSongTitle(){
