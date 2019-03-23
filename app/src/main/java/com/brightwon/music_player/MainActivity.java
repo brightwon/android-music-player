@@ -20,6 +20,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -243,6 +244,7 @@ public class MainActivity extends AppCompatActivity implements FloatingViewListe
             case FEED_BACK_FOR_PLAYER_ACTIVITY :
                 mPosition = data.getIntExtra("position", -1);
                 songs.get(mPosition).playStatus = true;
+                songs.get(mPosition).pauseStatus = data.getBooleanExtra("pause_status", false);
                 adapter.notifyDataSetChanged();
 
                 // set floatingView image

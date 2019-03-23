@@ -1,7 +1,11 @@
 package com.brightwon.music_player;
 
+import android.annotation.TargetApi;
 import android.content.Context;
+import android.graphics.drawable.AnimatedVectorDrawable;
+import android.os.Build;
 import android.support.annotation.NonNull;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,7 +14,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
-import com.wang.avi.AVLoadingIndicatorView;
 
 import java.util.ArrayList;
 
@@ -42,23 +45,29 @@ public class MusicListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         return new SongHolder(v);
     }
 
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder viewHolder, int position) {
         final MusicListItem currItem = songItems.get(position);
         final SongHolder holder = (SongHolder) viewHolder;
         final int curr = position;
+        final AnimatedVectorDrawable vector =
+                (AnimatedVectorDrawable) ContextCompat.getDrawable(context, R.drawable.play_animation);
 
         Glide.with(context).load(songItems.get(position).albumImg).into(holder.artImage);
         holder.songTitle.setText(songItems.get(position).songTitle);
         holder.songArtist.setText(songItems.get(position).songArtist);
+        holder.playGraph.setImageDrawable(vector);
 
         if(currItem.playStatus) {
             holder.playGraph.setVisibility(View.VISIBLE);
             if(currItem.pauseStatus) {
-                holder.playGraph.getIndicator().stop();
-                holder.playGraph.invalidate();
+                vector.stop();
+            } else {
+                vector.start();
             }
         } else {
+            vector.stop();
             holder.playGraph.setVisibility(View.GONE);
         }
 
@@ -70,27 +79,28 @@ public class MusicListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
                 mListener.onItemClick(v, curr);
 
                 // play animation logic
-                animatePlay(holder, curr);
+                animatePlay(holder, vector, curr);
             }
         });
     }
 
     /** switch on/off music play animation */
-    public void animatePlay(SongHolder holder, int curr) {
+    public void animatePlay(SongHolder holder, AnimatedVectorDrawable vector, int curr) {
         if (!songItems.get(curr).playStatus && prev == -1) {
             // first click
             holder.playGraph.setVisibility(View.VISIBLE);
             songItems.get(curr).playStatus = true;
+            vector.start();
 
         } else if (songItems.get(curr).playStatus && prev == curr){
             // same item click
-            if (holder.playGraph.getIndicator().isRunning()) {
+            if (!songItems.get(curr).pauseStatus) {
                 // is playing.. pause !
-                holder.playGraph.getIndicator().stop();
+                vector.stop();
                 songItems.get(curr).pauseStatus = true;
             } else {
                 // is paused.. replay !
-                holder.playGraph.getIndicator().start();
+                vector.start();
                 songItems.get(curr).pauseStatus = false;
             }
             songItems.get(curr).playStatus = true;
@@ -99,13 +109,17 @@ public class MusicListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
             // other item click
             preHolder.playGraph.setVisibility(View.GONE);
             songItems.get(prev).playStatus = false;
+            vector.stop();
 
             holder.playGraph.setVisibility(View.VISIBLE);
+            songItems.get(curr).pauseStatus = false;
             songItems.get(curr).playStatus = true;
+            vector.start();
 
         }
         preHolder = (SongHolder) mRecyclerView.findViewHolderForAdapterPosition(curr);
         prev = curr;
+        notifyDataSetChanged();
     }
 
     @Override
@@ -118,7 +132,7 @@ public class MusicListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
 
         ImageView artImage;
         TextView songTitle, songArtist;
-        AVLoadingIndicatorView playGraph;
+        ImageView playGraph;
 
         SongHolder(View v) {
             super(v);

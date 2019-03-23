@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="128dp"
+    android:height="128dp"
+    android:viewportWidth="144"
+    android:viewportHeight="140">
+
+    <group android:name="play_icon_first">
+        <path
+            android:name="first"
+            android:pathData="M 16 100 L 16 120 L 32 120 L 32 100 Z"
+            android:fillColor="@color/colorAccent"
+            android:strokeLineCap="butt"
+            android:strokeLineJoin="miter"
+            android:strokeMiterLimit="10" />
+    </group>
+    <group android:name="play_icon_second">
+        <path
+            android:name="second"
+            android:pathData="M 48 20 L 48 120 L 64 120 L 64 20 Z"
+            android:fillColor="@color/colorAccent"
+            android:strokeLineCap="butt"
+            android:strokeLineJoin="miter"
+            android:strokeMiterLimit="10" />
+    </group>
+    <group android:name="play_icon_third">
+        <path
+            android:name="third"
+            android:pathData="M 80 40 L 80 120 L 96 120 L 96 40 Z"
+            android:fillColor="@color/colorAccent"
+            android:strokeLineCap="butt"
+            android:strokeLineJoin="miter"
+            android:strokeMiterLimit="10" />
+    </group>
+    <group android:name="play_icon_fourth">
+        <path
+            android:name="fourth"
+            android:pathData="M 112 100 L 112 120 L 128 120 L 128 100 Z"
+            android:fillColor="@color/colorAccent"
+            android:strokeLineCap="butt"
+            android:strokeLineJoin="miter"
+            android:strokeMiterLimit="10" />
+    </group>
+</vector>

@@ -150,9 +150,11 @@ public class PlayerActivity extends AppCompatActivity {
         if (mp.isPlaying()) {
             playPauseView.setImageDrawable(ContextCompat.getDrawable(
                     getApplicationContext(), R.drawable.pause));
+            songs.get(mPosition).pauseStatus = false;
         } else {
             playPauseView.setImageDrawable(ContextCompat.getDrawable(
                     getApplicationContext(), R.drawable.play));
+            songs.get(mPosition).pauseStatus = true;
         }
     }
 
@@ -218,6 +220,7 @@ public class PlayerActivity extends AppCompatActivity {
         Intent intent = new Intent();
         intent.putExtra("album_uri", songs.get(mPosition).albumImg);
         intent.putExtra("position", mPosition);
+        intent.putExtra("pause_status", songs.get(mPosition).pauseStatus);
         setResult(FEED_BACK_FOR_PLAYER_ACTIVITY, intent);
         super.onBackPressed();
         finish();
@@ -232,6 +235,7 @@ public class PlayerActivity extends AppCompatActivity {
                 Intent intent = new Intent();
                 intent.putExtra("album_uri", songs.get(mPosition).albumImg);
                 intent.putExtra("position", mPosition);
+                intent.putExtra("pause_status", songs.get(mPosition).pauseStatus);
                 setResult(FEED_BACK_FOR_PLAYER_ACTIVITY, intent);
                 finish();
                 overridePendingTransition(R.anim.no_animation, R.anim.anim_slide_out_bottom);

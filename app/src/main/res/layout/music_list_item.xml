@@ -36,14 +36,13 @@
             android:layout_marginBottom="4dp"
             android:orientation="horizontal">
 
-            <com.wang.avi.AVLoadingIndicatorView
+            <ImageView
+                android:src="@drawable/play_icon"
                 android:id="@+id/play_status"
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:layout_marginEnd="4dp"
-                android:layout_marginRight="4dp"
-                app:indicatorColor="@color/colorAccent"
-                app:indicatorName="LineScalePartyIndicator" />
+                android:layout_marginRight="4dp" />
 
             <TextView
                 android:id="@+id/song_title"
