@@ -8,6 +8,7 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.media.MediaPlayer;
 import android.os.Build;
 import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
@@ -20,7 +21,6 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -210,6 +210,14 @@ public class MainActivity extends AppCompatActivity implements FloatingViewListe
     }
 
     @Override
+    protected void onStart() {
+        // set completion listener
+        setCompletionListener();
+
+        super.onStart();
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
         // exit music and floatingView
@@ -245,6 +253,7 @@ public class MainActivity extends AppCompatActivity implements FloatingViewListe
                 mPosition = data.getIntExtra("position", -1);
                 songs.get(mPosition).playStatus = true;
                 songs.get(mPosition).pauseStatus = data.getBooleanExtra("pause_status", false);
+                adapter.updatePrevPos(mPosition);
                 adapter.notifyDataSetChanged();
 
                 // set floatingView image
@@ -272,6 +281,40 @@ public class MainActivity extends AppCompatActivity implements FloatingViewListe
         } else {
             requestReadExternalStoragePermission();
         }
+    }
+
+    /** adjusts out of range position */
+    private int handlePosition(int position) {
+        if (position == songs.size()) {
+            position = 0;
+        } else if (position == -1) {
+            position = songs.size() - 1;
+        }
+        return position;
+    }
+
+    /** sets the callback after a music is complete */
+    private void setCompletionListener() {
+        mp.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer MP) {
+                songs.get(mPosition).playStatus = false;
+                mPosition = handlePosition(mPosition + 1);
+                songs.get(mPosition).playStatus = true;
+                songs.get(mPosition).pauseStatus = false;
+                adapter.updatePrevPos(mPosition);
+                recyclerView.smoothScrollToPosition(mPosition);
+                Glide.with(getApplicationContext()).load(songs.get(mPosition).albumImg).
+                        override(200,200).into(iconView);
+                adapter.notifyDataSetChanged();
+
+                try {
+                    mp.playMusic(getApplicationContext(), songs.get(mPosition).id, mPosition);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
     }
 
     /** requests the READ_EXTERNAL_STORAGE permission */

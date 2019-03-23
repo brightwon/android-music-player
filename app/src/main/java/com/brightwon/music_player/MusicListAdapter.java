@@ -22,7 +22,6 @@ public class MusicListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     private ArrayList<MusicListItem> songItems;
     private OnItemClickListener mListener;
     private RecyclerView mRecyclerView;
-    private SongHolder preHolder;
     private int prev = -1;
     private Context context;
 
@@ -84,8 +83,13 @@ public class MusicListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         });
     }
 
+    /** update previous position */
+    void updatePrevPos(int position) {
+        this.prev = position;
+    }
+
     /** switch on/off music play animation */
-    public void animatePlay(SongHolder holder, AnimatedVectorDrawable vector, int curr) {
+    private void animatePlay(SongHolder holder, AnimatedVectorDrawable vector, int curr) {
         if (!songItems.get(curr).playStatus && prev == -1) {
             // first click
             holder.playGraph.setVisibility(View.VISIBLE);
@@ -107,7 +111,6 @@ public class MusicListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
 
         } else {
             // other item click
-            preHolder.playGraph.setVisibility(View.GONE);
             songItems.get(prev).playStatus = false;
             vector.stop();
 
@@ -117,7 +120,6 @@ public class MusicListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
             vector.start();
 
         }
-        preHolder = (SongHolder) mRecyclerView.findViewHolderForAdapterPosition(curr);
         prev = curr;
         notifyDataSetChanged();
     }

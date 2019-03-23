@@ -19,12 +19,12 @@ public class MusicPlayer extends MediaPlayer {
     private boolean isStopped;
     private boolean isPaused;
 
-    public MusicPlayer() {
+    MusicPlayer() {
         this.setAudioStreamType(AudioManager.STREAM_MUSIC);
     }
 
     /** Plays the Music */
-    public void playMusic(Context context, int id, int position) throws IOException {
+    void playMusic(Context context, int id, int position) throws IOException {
         current = position;
         Uri uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id);
 

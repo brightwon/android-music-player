@@ -2,6 +2,7 @@ package com.brightwon.music_player;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.media.MediaPlayer;
 import android.os.Handler;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -52,6 +53,9 @@ public class PlayerActivity extends AppCompatActivity {
                 songs.get(mPosition).songTitle,
                 songs.get(mPosition).songArtist);
 
+        // set completion listener
+        setCompletionListener();
+
         // back button click event
         setBackEventClickListener();
 
@@ -86,7 +90,7 @@ public class PlayerActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 try {
-                    mPosition = handlePosition(songs, mPosition - 1);
+                    mPosition = handlePosition(mPosition - 1);
                     setInfo(songs.get(mPosition).albumImg,
                             songs.get(mPosition).songTitle,
                             songs.get(mPosition).songArtist);
@@ -106,11 +110,11 @@ public class PlayerActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 try {
-                    mPosition = handlePosition(songs, mPosition + 1);
+                    mPosition = handlePosition(mPosition + 1);
+                    mp.playMusic(getApplicationContext(), songs.get(mPosition).id, mPosition);
                     setInfo(songs.get(mPosition).albumImg,
                             songs.get(mPosition).songTitle,
                             songs.get(mPosition).songArtist);
-                    mp.playMusic(getApplicationContext(), songs.get(mPosition).id, mPosition);
                     switchPlayView();
                     toZeroSeek();
                 } catch (IOException e) {
@@ -136,13 +140,33 @@ public class PlayerActivity extends AppCompatActivity {
     }
 
     /** adjusts out of range position */
-    private int handlePosition(ArrayList songs, int position) {
+    private int handlePosition(int position) {
         if (position == songs.size()) {
             position = 0;
         } else if (position == -1) {
             position = songs.size() - 1;
         }
         return position;
+    }
+
+    /** sets the callback after a music is complete */
+    private void setCompletionListener() {
+        mp.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer MP) {
+                try {
+                    mPosition = handlePosition(mPosition + 1);
+                    mp.playMusic(getApplicationContext(), songs.get(mPosition).id, mPosition);
+                    setInfo(songs.get(mPosition).albumImg,
+                            songs.get(mPosition).songTitle,
+                            songs.get(mPosition).songArtist);
+                    progress.setProgress(0);
+                    progress.setMax(mp.getDuration());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
     }
 
     /** switch on/off playPauseView  */

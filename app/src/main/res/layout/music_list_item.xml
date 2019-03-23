@@ -37,7 +37,7 @@
             android:orientation="horizontal">
 
             <ImageView
-                android:src="@drawable/play_icon"
+                app:srcCompat="@drawable/play_icon"
                 android:id="@+id/play_status"
                 android:layout_width="24dp"
                 android:layout_height="24dp"
