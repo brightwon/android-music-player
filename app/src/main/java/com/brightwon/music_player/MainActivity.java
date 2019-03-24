@@ -4,6 +4,7 @@ import android.Manifest;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
@@ -72,6 +73,12 @@ public class MainActivity extends AppCompatActivity implements FloatingViewListe
     /* MusicPlayer object */
     static MusicPlayer mp;
 
+    private SharedPreferences sharedPreferences;
+
+    /* play option status */
+    private boolean repeatStatus;
+    private boolean shuffleStatus;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -79,8 +86,11 @@ public class MainActivity extends AppCompatActivity implements FloatingViewListe
         initAppBar();
         initRecycler();
 
-        // create MusicPlayer instance
         mp = new MusicPlayer();
+
+        sharedPreferences = getSharedPreferences("pref", MODE_PRIVATE);
+        shuffleStatus = sharedPreferences.getBoolean("shuffle_status", false);
+        repeatStatus = sharedPreferences.getBoolean("repeat_status", false);
 
         // item click event
         MusicListAdapter.OnItemClickListener mListener = new MusicListAdapter.OnItemClickListener() {
@@ -251,19 +261,15 @@ public class MainActivity extends AppCompatActivity implements FloatingViewListe
                 break;
             case FEED_BACK_FOR_PLAYER_ACTIVITY :
                 mPosition = data.getIntExtra("position", -1);
-                songs.get(mPosition).playStatus = true;
                 songs.get(mPosition).pauseStatus = data.getBooleanExtra("pause_status", false);
+                songs.get(mPosition).playStatus = true;
                 adapter.updatePrevPos(mPosition);
                 adapter.notifyDataSetChanged();
 
                 // set floatingView image
-                Glide.with(getApplicationContext()).load(data.getStringExtra("album_uri")).
+                Glide.with(getApplicationContext()).load(songs.get(mPosition).albumImg).
                         override(200,200).into(iconView);
-
-                // redraw the floatingView
                 appearView();
-
-                // make the last position item visible
                 recyclerView.scrollToPosition(mPosition);
                 break;
         }
