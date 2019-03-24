@@ -57,6 +57,7 @@ public class PlayerActivity extends AppCompatActivity {
         Intent intent = getIntent();
         songs = (ArrayList<MusicListItem>) intent.getSerializableExtra("song_list");
         mPosition = intent.getIntExtra("position", -1);
+        shuffledList = (ArrayList<Integer>) intent.getSerializableExtra("shuffle_list");
 
         // set text and image
         setInfo(songs.get(mPosition).albumImg,
@@ -98,13 +99,19 @@ public class PlayerActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 try {
-                    mPosition = handlePosition(mPosition - 1);
+                    if (shuffleStatus) {
+                        int tmpPos = shuffledList.indexOf(mPosition);
+                        mPosition = shuffledList.get(handlePosition(tmpPos - 1));
+                    } else {
+                        mPosition = handlePosition(mPosition - 1);
+                    }
+                    mp.playMusic(getApplicationContext(), songs.get(mPosition).id, mPosition);
                     setInfo(songs.get(mPosition).albumImg,
                             songs.get(mPosition).songTitle,
                             songs.get(mPosition).songArtist);
-                    mp.playMusic(getApplicationContext(), songs.get(mPosition).id, mPosition);
                     switchPlayView();
                     toZeroSeek();
+                    progress.setMax(mp.getDuration());
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -118,13 +125,19 @@ public class PlayerActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 try {
-                    mPosition = handlePosition(mPosition + 1);
+                    if (shuffleStatus) {
+                        int tmpPos = shuffledList.indexOf(mPosition);
+                        mPosition = shuffledList.get(handlePosition(tmpPos + 1));
+                    } else {
+                        mPosition = handlePosition(mPosition + 1);
+                    }
                     mp.playMusic(getApplicationContext(), songs.get(mPosition).id, mPosition);
                     setInfo(songs.get(mPosition).albumImg,
                             songs.get(mPosition).songTitle,
                             songs.get(mPosition).songArtist);
                     switchPlayView();
                     toZeroSeek();
+                    progress.setMax(mp.getDuration());
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -163,7 +176,14 @@ public class PlayerActivity extends AppCompatActivity {
             @Override
             public void onCompletion(MediaPlayer MP) {
                 try {
-                    mPosition = handlePosition(mPosition + 1);
+                    if (repeatStatus) {
+                        mPosition = handlePosition(mPosition);
+                    } else if (shuffleStatus) {
+                        int tmpPos = shuffledList.indexOf(mPosition);
+                        mPosition = shuffledList.get(handlePosition(tmpPos + 1));
+                    } else {
+                        mPosition = handlePosition(mPosition + 1);
+                    }
                     mp.playMusic(getApplicationContext(), songs.get(mPosition).id, mPosition);
                     setInfo(songs.get(mPosition).albumImg,
                             songs.get(mPosition).songTitle,
@@ -327,6 +347,9 @@ public class PlayerActivity extends AppCompatActivity {
         Intent intent = new Intent();
         intent.putExtra("position", mPosition);
         intent.putExtra("pause_status", songs.get(mPosition).pauseStatus);
+        intent.putExtra("repeat_status", repeatStatus);
+        intent.putExtra("shuffle_status", shuffleStatus);
+        intent.putExtra("shuffle_list", shuffledList);
         setResult(FEED_BACK_FOR_PLAYER_ACTIVITY, intent);
         super.onBackPressed();
         finish();
@@ -341,6 +364,9 @@ public class PlayerActivity extends AppCompatActivity {
                 Intent intent = new Intent();
                 intent.putExtra("position", mPosition);
                 intent.putExtra("pause_status", songs.get(mPosition).pauseStatus);
+                intent.putExtra("repeat_status", repeatStatus);
+                intent.putExtra("shuffle_status", shuffleStatus);
+                intent.putExtra("shuffle_list", shuffledList);
                 setResult(FEED_BACK_FOR_PLAYER_ACTIVITY, intent);
                 finish();
                 overridePendingTransition(R.anim.no_animation, R.anim.anim_slide_out_bottom);

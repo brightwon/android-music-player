@@ -120,8 +120,8 @@ public class MusicListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
             vector.start();
 
         }
+        notifyItemChanged(prev);
         prev = curr;
-        notifyDataSetChanged();
     }
 
     @Override

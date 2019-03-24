@@ -1,6 +1,7 @@
 package com.brightwon.music_player;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.Intent;
@@ -34,6 +35,7 @@ import com.bumptech.glide.Glide;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 import jp.co.recruit_lifestyle.android.floatingview.FloatingViewListener;
@@ -79,6 +81,8 @@ public class MainActivity extends AppCompatActivity implements FloatingViewListe
     private boolean repeatStatus;
     private boolean shuffleStatus;
 
+    private ArrayList<Integer> shuffledList;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -87,7 +91,6 @@ public class MainActivity extends AppCompatActivity implements FloatingViewListe
         initRecycler();
 
         mp = new MusicPlayer();
-
         sharedPreferences = getSharedPreferences("pref", MODE_PRIVATE);
         shuffleStatus = sharedPreferences.getBoolean("shuffle_status", false);
         repeatStatus = sharedPreferences.getBoolean("repeat_status", false);
@@ -140,6 +143,9 @@ public class MainActivity extends AppCompatActivity implements FloatingViewListe
         songs.addAll(list);
         adapter.notifyDataSetChanged();
 
+        // make shuffled list
+        if (shuffleStatus) shuffledList = makeShuffleList();
+
         // initialize FloatingView settings
         initFloatingView();
     }
@@ -154,6 +160,7 @@ public class MainActivity extends AppCompatActivity implements FloatingViewListe
                 Intent intent = new Intent(getApplicationContext(), PlayerActivity.class);
                 intent.putExtra("position", mPosition);
                 intent.putExtra("song_list", songs);
+                intent.putExtra("shuffle_list", shuffledList);
                 startActivityForResult(intent, FEED_BACK_FOR_PLAYER_ACTIVITY);
                 overridePendingTransition(R.anim.anim_slide_in_bottom, R.anim.no_animation);
 
@@ -162,6 +169,17 @@ public class MainActivity extends AppCompatActivity implements FloatingViewListe
                 songs.get(mPosition).playStatus = false;
             }
         });
+    }
+
+    /** gets shuffle list */
+    @SuppressLint("UseSparseArrays")
+    private ArrayList makeShuffleList() {
+        ArrayList<Integer> posList = new ArrayList<>();
+        for (int i = 0; i < songs.size(); i++) {
+            posList.add(i);
+        }
+        Collections.shuffle(posList);
+        return posList;
     }
 
     /** sets disappear animation for the floatingView */
@@ -217,13 +235,13 @@ public class MainActivity extends AppCompatActivity implements FloatingViewListe
         manager.removeAllViewToWindow();
         iconView = null;
         isFloat = false;
+        songs.get(mPosition).playStatus = false;
+        adapter.notifyItemChanged(mPosition);
     }
 
     @Override
     protected void onStart() {
-        // set completion listener
         setCompletionListener();
-
         super.onStart();
     }
 
@@ -266,6 +284,10 @@ public class MainActivity extends AppCompatActivity implements FloatingViewListe
                 adapter.updatePrevPos(mPosition);
                 adapter.notifyDataSetChanged();
 
+                repeatStatus = data.getBooleanExtra("repeat_status", false);
+                shuffleStatus = data.getBooleanExtra("shuffle_status", false);
+                shuffledList = (ArrayList) data.getSerializableExtra("shuffle_list");
+
                 // set floatingView image
                 Glide.with(getApplicationContext()).load(songs.get(mPosition).albumImg).
                         override(200,200).into(iconView);
@@ -304,17 +326,25 @@ public class MainActivity extends AppCompatActivity implements FloatingViewListe
         mp.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
             @Override
             public void onCompletion(MediaPlayer MP) {
-                songs.get(mPosition).playStatus = false;
-                mPosition = handlePosition(mPosition + 1);
-                songs.get(mPosition).playStatus = true;
-                songs.get(mPosition).pauseStatus = false;
-                adapter.updatePrevPos(mPosition);
-                recyclerView.smoothScrollToPosition(mPosition);
-                Glide.with(getApplicationContext()).load(songs.get(mPosition).albumImg).
-                        override(200,200).into(iconView);
-                adapter.notifyDataSetChanged();
-
                 try {
+                    songs.get(mPosition).playStatus = false;
+                    songs.get(mPosition).pauseStatus = false;
+                    if (repeatStatus) {
+                        mPosition = handlePosition(mPosition);
+                    } else if (shuffleStatus) {
+                        int tmpPos = shuffledList.indexOf(mPosition);
+                        mPosition = shuffledList.get(handlePosition(tmpPos + 1));
+                    } else {
+                        mPosition = handlePosition(mPosition + 1);
+                    }
+                    songs.get(mPosition).playStatus = true;
+                    adapter.updatePrevPos(mPosition);
+                    adapter.notifyDataSetChanged();
+
+                    recyclerView.smoothScrollToPosition(mPosition);
+                    Glide.with(getApplicationContext()).load(songs.get(mPosition).albumImg).
+                            override(200,200).into(iconView);
+
                     mp.playMusic(getApplicationContext(), songs.get(mPosition).id, mPosition);
                 } catch (IOException e) {
                     e.printStackTrace();
