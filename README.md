@@ -14,8 +14,9 @@ Full Video Link : [YouTube Link](https://www.youtube.com/watch?v=VW7jzVWkbos)
 * Music play & pause
 * Repeat play
 * Shuffle play (not random)
+<br />
 
-### Library (Github Link)
+### Library
 * [Glide 4.9.0](https://github.com/bumptech/glide)
 * [CircleImageView 3.0.0](https://github.com/hdodenhof/CircleImageView)
 * [FloatingView 2.4.0](https://github.com/recruit-lifestyle/FloatingView)
